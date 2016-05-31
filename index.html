@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Open edX 101: A Source Code Review</title>
+
+		<meta name="description" content="Open edX 101: A Source Code Review">
+		<meta name="author" content="Régis Behmo">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/night.css" id="theme">
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+        <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+
+		<!-- Code syntax highlighting -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+        <style>
+            .reveal .slide-number {
+                font-size: 25px;
+                font-weight: bold;
+            }
+            .full-width {
+                width: 100%;
+            }
+            .reveal .dim p:not(.undim) {
+                color: #837E7E;
+            }
+            .table {
+                display: table;
+            }
+            .table-row {
+                display: table-row;
+            }
+            .table-cell {
+                display: table-cell;
+            }
+            .reveal .sidespace {
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+            .reveal .bottom-border {
+                border-bottom: 2px solid white;
+            }
+            .reveal .green {
+                color: #17ff2e;
+            }
+            .reveal .orange {
+                color: orange;
+            }
+            .reveal .right-border {
+                border-right: 2px solid white;
+            }
+
+            .reveal div .d3-label {
+              color: black;
+              font: 16px sans-serif;
+              position: absolute;
+            }
+        </style>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Open edX 101</h1>
+					<h3>A Source Code Review</h3>
+					<p>
+                    <a href="http://hakim.se">Régis Behmo</a> (<a href="http://github.com/regisb">@regisb</a>) <br>
+                    Open edX Conference, June 14 2016 | Stanford, CA
+					</p>
+                    <aside class="notes">Hi everyone! My name is Régis and together, for the next 30 minutes or so, we are going to read the source code of Open edX.</aside>
+				</section>
+
+				<!--<section class="no-slide-number">-->
+					<!--<h3>Open edX 101: A Source Code Review</h3>-->
+                    <!--<br>-->
+                    <!--<p class="fragment"><i class="fa fa-plug"></i> XBlocks</p>-->
+                    <!--<p class="fragment"><i class="fa fa-tachometer"></i> XModules</p>-->
+                    <!--<p class="fragment"><i class="fa fa-cube"></i> TODO...</p>-->
+                <!--</section>-->
+
+                <section>
+                    <aside class="notes">When I was first confronted with the Open edX source code, two years ago, that's when I joined the FUN project at the French ministry of higher education, well exploring the Open edX source code was pretty hard. I was already a senior python and django developer, so I was familiar with the architecture of a standard django project, and some non-standard django projects as well. The Open edX documentation is really good, especially for a project that large. Yet there were many surprises along the way, as I explored the different modules to develop new features or resolve weird bugs. 
+
+                        What I tried to do in this presentation is to explore the important pieces of code that make up the Open edX project. Now I need to give you a word of warning here: I have been an Open edX developer since 2014; that's three full years after the first commit to edx-platform was made.
+                    </aside>
+
+<pre class="fragment"></code class="bash">regis@host:~/repos/edx-platform$ git log | tail -1
+commit cc1de22e2621c7fa1199750cf13ba57c937b9d98
+Author: Piotr Mitros <pmitros@mit.edu>
+Date:   Wed Dec 7 09:28:16 <span class="green">2011</span> -0500
+
+    Initial commit</pre></code>
+
+                    <aside class="notes">
+                        I have made a couple contributions to Open edX, but nothing major; I'm part of the Open edX community, but I don't work at edX. What I mean is that there is a probability that I say very wrong things about Open edX here, and that probability is much bigger than zero. If you spot a mistake, please tell me about it in the question session or later; the slides will be available on the internet and I will update them to include your comments.
+                    </aside>
+                </section>
+
+                <section>
+                    <h3>What is Open edX made of?</h3>
+                    <aside class="notes">
+    Alright, let's get started. In order to make this presentation, I did what most developers do when they first start hacking on Open edX: I downloaded a virtual machine containing the latest stable release of Open edX. Everything we say from now on will be about dogwood.3.
+
+    Before we dive deep into the Open edX source code, what I would like to do now is to try to give us an overview of how exactly the Open edX source code is organized.
+
+    Here is the list of folders that contain major Open edX repositories:
+                    </aside>
+
+<pre class="fragment"># LMS + CMS
+<span class="fragment highlight-green">/edx/app/edxapp/edx-platform</span>
+
+# Forum service (Ruby code)
+/edx/app/forum/cs_comments_service
+
+# Programs-based product lines such as edX's XSeries offering.
+/edx/app/programs/programs
+
+# Payment services (seldom installed)
+/edx/app/ecommerce/ecommerce
+/edx/app/ecomworker/ecomworker
+
+# Theme customization (optional)
+/edx/app/edxapp/themes
+                    
+# Python virtual environment for edx-platform dependencies
+/edx/app/edxapp/venvs/edxapp
+    ...
+</pre>
+
+                    <aside class="notes">
+    As we can see, it's wrong to assume that Open edX consists of a single code repository. There are mandatory repositories, such as edx-platform and its dependencies from the virtual environment; there is a theming repo that you may wish to create and install yourselves. The forum repository is pretty much mandatory as well, if you wish to provide your users a discussion service. And there are optional ecommerce repositories, which you don't need if your platform does not offer paying products.
+
+                    Let's take a look at the first repository listed here. edx-platform is actually the biggest code repository that is necessary to run Open edX. But how big is it? Let me do a quick survey here: how many lines of code do you think there are in edx-platform? I'm talking about actual code: not comments, not blank lines and not vendor dependencies.
+                    </aside>
+				</section>
+    
+                <section>
+                    <aside class="notes">As an indication, here is the line count for several well known projects, written in Python and in other languages, including more languages such as Java or php. Does that change your estimates?</aside>
+                    <h3>What is Open edX made of?</h3>
+                    <h4>edx-platform</h4>
+                    <ul>
+                        <li>CPython 3.5.1 (Python, C, C++): 967725</li>
+                        <li>Moodle (php): 672331</li>
+                        <li>ElasticSearch (Java): 590318</li>
+                        <li>Wordpress (php): 291709</li>
+                        <li>Django: 228381</li>
+                        <li>Sentry: 175073</li>
+                        <li>Mercurial: 122671</li>
+                        <li>Celery: 44022</li>
+                        <li>Flask: 9072</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <aside class="notes">edx-platform contains 427k lines of code. Outside of python itself, this is the largest python repository that I know of. I can't emphasize this enough: Open edX is really big.
+                        
+    Why is that important? Well it's important for me. Remember the title of this presentation? "Open edX: A source code review". When I submitted this talk and started working on the presentation, I had NO IDEA I would have to dive through so much code. And of course, I didn't. A lot of the code that you are going to find in Open edX is more-or-less standard Django code. What I would like to talk about in this presentation is the code that is non-standard, tricky or difficult to grasp. To do that, we need to understand what edx-platform is made of.</aside>
+                    <h3>What is Open edX made of?</h3>
+                    <h4>edx-platform</h4>
+                    <ul>
+                        <li>CPython 3.5.1 (Python, C, C++): 967725</li>
+                        <li>Moodle (php): 672331</li>
+                        <li>ElasticSearch (Java): 590318</li>
+                        <li class="green">edx-platform: 427321</li>
+                        <li>Wordpress (php): 291709</li>
+                        <li>Django: 228381</li>
+                        <li>Sentry: 175073</li>
+                        <li>Mercurial: 122671</li>
+                        <li>Celery: 44022</li>
+                        <li>Flask: 9072</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>What is Open edX made of?</h3>
+                    <h4>edx-platform</h4>
+                    <aside class="notes">The composition of edx-platform is not too surprising for a django project. The repo is mostly made of python code with a lot of web-specific code: javascript and some coffeescript, css (both vanilla css and compiled css) and html. Those of you that have worked with Open edX know that running a server requires a rather long preliminary phase for compiling js and css code. This compile time is caused by the SASS and the Coffeescript code. Nothing out of the ordinary. Now let's take a closer look at how this code is organized.</aside>
+
+<!--Command run was: cloc --exclude-list-file=./cloc_exclude --exclude-dir=node_modules,./common/static/fonts/vendor,./common/static/js/vendor,./common/static/css/vendor,./cms/static/sass/vendor,./lms/static/js/vendor,./lms/static/sass/vendor,./lms/static/css/vendor,./static/vendor,vendor_extra/ $1-->
+<pre style="text-align:center"><code class="bash">cloc --exclude-dir=&lt;vendor-folders&gt; edx-platform</code></pre>
+<pre>-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Python                        1791          64982          98146         244140 # 57.1%
+Javascript                     718          13745          10806          79920 # 18.7%
+SASS                           300          10054           3769          43727 # 10.2%
+HTML                           493           4716          30435          27928 # 6.5%
+CoffeeScript                   118           2660           1459          14558 # 3.4%
+CSS                             12            510            461           6675 # 1.5%
+SQL                              2              8              9           4137
+XML                            286            172             33           3451
+YAML                            40            270            367           1827
+Bourne Shell                    13            219            222            700
+make                             2             31              6            143
+ActionScript                     1             21             23             74
+XSD                              1              8              0             41
+-------------------------------------------------------------------------------
+SUM:                          3777          97396         145736         <span class="green">427321</span>
+-------------------------------------------------------------------------------</pre>
+                </section>
+
+                <section data-state="edx-platform-cloc" data-background-color="#fff">
+                    <aside class="notes">In this graph, we have plotted the different components of edx-platform. The lines of code of each component is proportional to its angular range. The further we go from the center, the deeper we go in the folder structure of the repository. We can see that the edx-platform code is rather well separated in modular components. The lms and the cms are clearly visible; if you've never run Open edX before: edx-platform is not one single django project, but more like two distinct django projects with some common code, stored in the common and openedx folders.
+
+We can spot a lot of js code, but also a lot of test code, including in the javascript folders, which is comforting.
+                        
+The LMS is the django project provided to the students; the CMS is used by the course staff to design and administer their courses. As we can see, the LMS-specific code is much more complex than the CMS-specific code. Note however that the code common to both the LMS and the CMS is very large as well; almost as large as the LMS-specific code. The LMS is made of many different django applications, the largest of which is the courseware, which is in charge of displaying a course to a user. On the other hand, the CMS is almost entirely made of one single big django application, called the contentstore. The common code contains a variety of application, but there is one library that stands out very clearly. The xmodule package is simply huge. At more than 65k lines of code, it can be considered as a very big python project in its own right.
+</aside>
+                    <div id="edx-platform-cloc"></div>
+				</section>
+
+
+                <section>
+                    <h3>What is Open edX made of?</h3>
+                    <h4>dependencies</h4>
+<pre># LMS + CMS
+/edx/app/edxapp/edx-platform       # 427321
+
+# Forum service (Ruby code)
+/edx/app/forum/cs_comments_service # 5399
+
+# Programs-based product lines such as edX's XSeries offering.
+/edx/app/programs/programs         # 4906
+
+# Payment services (seldom installed)
+/edx/app/ecommerce/ecommerce       # 25670
+/edx/app/ecomworker/ecomworker     # 643
+
+# Theme customization (optional)
+/edx/app/edxapp/themes
+                    
+# Python virtual environment
+<span class="fragment highlight-green">/edx/app/edxapp/venvs/edxapp</span>
+</pre>
+                </section>
+                <section>
+                    <h3>What is Open edX made of?</h3>
+                    <h4>virtual environment</h4>
+<pre>
+<span class="green">/edx/app/edxapp/venvs/edxapp</span>
+    ora2                        # 31245
+    edx-search                  # 3321
+    opaque-keys                 # 3089
+    recommender-xblock          # 3001
+    xblock-poll                 # 2194
+    edx-submissions             # 2193
+    edx-milestones              # 1953
+    event-tracking              # 1777
+    edx-sga                     # 1567
+    edx-reverification-block    # 1418
+    xblock-google-drive         # 1261
+    edx-user-state-client       # 1083
+    ccx-keys                    # 748
+    rate-xblock                 # 598
+    acid-xblock                 # 750
+    edx-jsme                    # 607
+    done-xblock                 # 534
+</pre>
+                </section>
+
+                <section>
+                    <h3>How <del>the sausage</del> Open edX is made</h3>
+                    <h4 class="fragment">Viewing a course</h4>
+                    <aside class="notes">We have spent a lot of time counting lines of code in Open edX and that has been a bit tedious, sorry about that. Yet I feel it has been necessary in order to understand where the complexity lies in the project. We have seen where the most code is written, and as we look into a specific view, we can expect to pay a visit to these places. Now let's take a look at a specific django view.</aside>
+                </section>
+
+                <section>
+                    <h3>How Open edX is made</h3>
+                    <h4>Viewing a course</h4>
+
+                    <aside class="notes">Let's run an LMS! With the following commands, we download a virtual machine and provision it with a recent install of Open edX. Just like previously, we run the latest stable release, which is dogwood.3.
+                    </aside>
+                    
+<pre class="fragment" style="width: 1124px;"><code class="bash">$ curl -L https://raw.github.com/edx/configuration/master/vagrant/release/devstack/Vagrantfile > Vagrantfile
+$ OPENEDX_RELEASE="named-release/dogwood.3" vagrant up && vagrant ssh
+$ sudo su edxapp
+$ paver devstack lms
+...
+
+</code></pre>
+                </section>
+
+                <section data-background-image="./img/lms_lesson1.png"></section>
+                <section data-background-image="./img/lms_lesson1_url.png"></section>
+
+                <section>
+                    <h3>How Open edX is made</h3>
+                    <h4>Viewing a course</h4>
+                    
+                    <img src="./img/lms_lesson1_url_alone.png" alt="courseware url">
+<pre>lms/urls.py</pre>
+<pre>url(
+    r'^courses/{}/courseware/(?P&lt;chapter&gt;[^/]*)/(?P&lt;section&gt;[^/]*)/$'.format(
+        settings.COURSE_ID_PATTERN,
+    ),
+    <span class="fragment highlight-green">'courseware.views.index',</span>
+    name='courseware_section',
+)</pre>
+
+
+                </section>
+                <section>
+                    <h2>Inside an LMS view</h2>
+                    <table>
+                        <tr>
+                            <td>
+<pre>lms/djangoapps/courseware/views.py</pre>
+<pre><code class="python">def index(request, course_id, chapter, section):
+    ...
+    course = get_course_with_access(..., course_key, ...) 
+    section_module = get_module_for_descriptor(
+        user,
+        request,
+        section_descriptor,
+        field_data_cache,
+        course_key,
+        position,
+        course=course
+    )
+</code></pre>
+                            </td>
+                            <td>
+<pre class="fragment"><code class="python">pprint(course.__class__.__mro__)
+(&lt;class 'xblock.internal.CourseDescriptorWithMixins'&gt;,
+ &lt;class 'xmodule.course_module.CourseDescriptor'&gt;,
+ &lt;class 'xmodule.course_module.CourseFields'&gt;,
+ &lt;class 'xmodule.seq_module.SequenceDescriptor'&gt;,
+ &lt;class 'xmodule.seq_module.SequenceFields'&gt;,
+ &lt;class 'xmodule.seq_module.ProctoringFields'&gt;,
+ &lt;class 'xmodule.mako_module.MakoModuleDescriptor'&gt;,
+ &lt;class 'xmodule.mako_module.MakoTemplateBlockBase'&gt;,
+ &lt;class 'xmodule.xml_module.XmlDescriptor'&gt;,
+ &lt;class 'xmodule.xml_module.XmlParserMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleDescriptor'&gt;,
+ &lt;class 'xmodule.x_module.HTMLSnippet'&gt;,
+ &lt;class 'xmodule.x_module.ResourceTemplates'&gt;,
+ &lt;class 'lms.djangoapps.lms_xblock.mixin.LmsBlockMixin'&gt;,
+ &lt;class 'xmodule.modulestore.inheritance.InheritanceMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleFields'&gt;,
+ &lt;class 'xblock.core.XBlock'&gt;,
+ &lt;class 'xblock.mixins.XmlSerializationMixin'&gt;,
+ &lt;class 'xblock.mixins.HierarchyMixin'&gt;,
+ &lt;class 'xmodule.mixin.LicenseMixin'&gt;,
+ &lt;class 'xmodule.modulestore.edit_info.EditInfoMixin'&gt;,
+ &lt;class 'xblock.XBlockMixin'&gt;,
+ &lt;class 'xblock.core.XBlockMixin'&gt;,
+ &lt;class 'xblock.mixins.ScopedStorageMixin'&gt;,
+ &lt;class 'xblock.mixins.RuntimeServicesMixin'&gt;,
+ &lt;class 'xblock.mixins.HandlersMixin'&gt;,
+ &lt;class 'xblock.mixins.IndexInfoMixin'&gt;,
+ &lt;class 'xblock.mixins.ViewsMixin'&gt;,
+ &lt;class 'xblock.core.SharedBlockBase'&gt;,
+ &lt;class 'xblock.plugin.Plugin'&gt;,
+ &lt;type 'object'&gt;)
+</code></pre>
+                            </td>
+                        </tr>
+                    </table>
+                </section>
+
+                <section>
+                    <h2>What's in a <code>course</code>?</h2>
+
+                </section>
+
+                <section>
+                    <h3>manage.py</h3>
+
+                    <p>Django 1.8</p>
+<pre class="green">os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myproject.settings")
+from django.core.management import execute_from_command_line
+execute_from_command_line(sys.argv)</pre>
+                </section>
+
+                <section>
+                    <h3>manage.py</h3>
+                    <p>edx-platform</p>
+<pre><span class="green">os.environ["DJANGO_SETTINGS_MODULE"] = edx_args.settings_base.replace('/', '.') + "." + edx_args.settings</span>
+...
+<span class="orange">os.environ.setdefault("SERVICE_VARIANT", edx_args.service_variant)</span>
+...
+startup = importlib.import_module(edx_args.startup)
+startup.run()
+<span class="green">from django.core.management import execute_from_command_line</span>
+execute_from_command_line([sys.argv[0]] + django_args)
+</pre>
+                </section>
+
+                <section>
+                    <h3>manage.py &gt; startup.run()</h3>
+<pre><code class="python">def run():
+    """
+    Executed during django startup
+    """
+    ...
+    django.setup()
+    autostartup()
+    ...</code></pre>
+
+<aside class="notes">The call to django.setup is necessary to load the settings. What's interesting is the call to autostartup.</aside>
+                </section>
+
+                <section>
+                    <h3><pre>manage.py &gt; startup.run() &gt; autostartup()</pre></h3>
+<pre><code class="python">def autostartup():
+    """
+    Execute app.startup:run() for all installed django apps
+    """
+    for app in settings.INSTALLED_APPS:
+        # See if there's a startup module in each app.
+        try:
+            mod = import_module(app + '.startup')
+        except ImportError:
+            continue
+
+        # If the module has a run method, run it.
+        if hasattr(mod, 'run'):
+            mod.run()</code></pre>
+
+                    <aside class="notes">The startup module is a good place to store code that should be executed at every run</aside>
+                </section>
+
+                <section>
+                    <h3>XBlocks</h3>
+                    <p>everything is explained in 2:24 https://www.youtube.com/watch?v=dTS-nsf7d3Q (fantastic explanation by Ned)</p>
+
+                    <p>XBlocks are like a webapp, but for only one div inside a page</p>
+
+                    <p>The runtime of an xblock provides it with data and services. Examples?</p>
+                    <p>XBlocks have nothing to do with a course. Hence the name, which has nothing to do with courses, education, etc.</p>
+                    <p>It should be mentioned that Ned (again!) made a great webinar with Appsembler on XBlocks: http://www.appsembler.com/blog/open-edx-xblocks-webinar/ Unfortunately, it's not technical enough for my taste.</p>
+                </section>
+
+                <section>
+                    <h3>Notes on XBlocks</h3>
+                    <p>Let's examine xblock-poll developed by Opencraft https://github.com/open-craft/xblock-poll</p>
+                    <p>XBlock have one or more entry points defined in setup.py</p>
+                    <pre><code class="python">entry_points={
+        'xblock.v1': [
+            'poll = poll:PollBlock',
+            'survey = poll:SurveyBlock',
+        ]
+    }</code></pre>
+                    <aside class="notes">Fragments are simple objects that aggregate html content, including external css/js resources, and renders it.
+
+                    What's the scope in a field? The scope describes whether the field will have the same or different values for all users or xblock instances in a course.
+
+                    What are practical implementations of a Runtime? Examples are complicated. (git grep "def handler_url"). LmsModuleSystem is an example of runtime? So a ModuleSystem is a runtime instance?
+
+                    What are runtimes for? For providing external services to the xblock. E.g: localization/translation/internationalization. HA ! J'ai capté. Un runtime expose juste un attribut `services` qui sont des instances d'objets standard. On peut tout faire sur eux. Mais quels sont les services standards ?</aside>
+                </section>
+
+                <section>
+                    <h3>XBlock runtimes</h3>
+                    <p>Example of how XBlocks use runtime services:</p>
+
+                    <pre><code class="python">
+class XBlock(...): 
+    ....
+   def ugettext(self, text):
+        """
+        Translates message/text and returns it in a unicode string.
+        Using runtime to get i18n service.
+        """
+        return self.runtime.service(self, "i18n").ugettext(text)</code></pre>
+
+                    <aside class='notes'>XBlocks may 'want' or 'require' services. 'wanted' services may not be provided. 'needed' services will raise a xblock.exceptions.NoSuchServiceError exception.</aside>
+                    <pre><code class="python">
+@XBlock.wants('settings') # implemented e.g by xmodule.xmodule.services.SettingsService
+@XBlock.needs('fs')       # implemented e.g by xblock.plugins.FSService
+class MyXblock(...):
+    ...
+    def method1(self):
+        settings_service = self.runtime.service(self, "settings")
+        if not settings_service:
+            return True
+        ...
+
+    def method2(self):
+        try
+            settings_service = self.runtime.service(self, "fs")
+        except xblock.exceptions.NoSuchServiceError:
+            ...
+        ...</code></pre>
+                </section>
+
+                <section>
+                    <h2>The XModule runtime</h2>
+                    <aside class="notes">It took me a while to understand the following piece of code. Tip: what does the __getattr__ method do? (it's overridden)</aside>
+                    <pre><code class="python"># xmodule.xmodule.x_module.CombinedSystem
+def render(self, block, view_name, context=None):
+    ...
+    return self.__getattr__('render')(block, view_name, context)</code></pre>
+                </section>
+
+                <section>
+                    <h2>XBlock rendering</h2>
+                    <pre><code class="python">
+# In the cms: contentstore.views.item.xblock_view_handler
+def xblock_view_handler(request, usage_key_string, view_name):
+    ...
+    store = modulestore()
+    xblock = store.get_item(usage_key)
+    ...
+    fragment = xblock.render(view_name) # view_name in ['studio_view', 'student_view', 'author_view']
+    ...
+    return JsonResponse({
+        'html': fragment.content
+        ...
+    })</code></pre>
+                </section>
+
+                <section>
+                    <h2>XBlock storage</h2>
+                    <aside class="notes">Where is XBlock data saved? An XBlock knows nothing about the storage backend that is used: it doesn't know whether we use SQL, MongoDb or a key-value store. You guessed it, the runtime is responsible for storing XBlock data.</aside>
+
+                    <pre><code class="python">
+class XBlock(ScopedStorageMixin, ...):
+    ...
+
+class ScopedStorageMixin(...):
+    def save(self):
+        ...
+        self._field_data.set_many(self, fields_to_save_json)
+
+    @property
+    def _field_data(self):
+        ...
+        return self.runtime.service(self, 'field-data')
+
+
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>XBlock storage</h2>
+                    <pre><code class="python">
+class LmsFieldData(SplitFieldData):
+    def __init__(self, authored_data, student_data):
+        ...
+        authored_data = ReadOnlyFieldData(authored_data)
+        ...
+
+        super(LmsFieldData, self).__init__({
+            Scope.content: authored_data,
+            Scope.settings: authored_data,
+            Scope.parent: authored_data,
+            Scope.children: authored_data,
+            Scope.user_state_summary: student_data,
+            Scope.user_state: student_data,
+            Scope.user_info: student_data,
+            Scope.preferences: student_data,
+        })</code></pre>
+
+                    <aside class="notes">What are student_data and authored_data? We can see that they are stored differently, but how? authored_data is in fact a MongoKeyValueStore. We can see that authored data is stored in MongoDb instead of MySQL.</aside>
+                
+                </section>
+                <section>
+                    <h2>XBlock student data storage</h2>
+<pre><code>
+def get_module_system_for_user(user, student_data,
+                               ...): # many arguments
+    ...
+    field_data = LmsFieldData(descriptor._field_data, student_data)
+    ...
+
+
+def get_module_for_descriptor(user, request, descriptor, field_data_cache, course_key, ...):
+    return get_module_system_for_user(
+        ...
+        student_data=KvsFieldData(DjangoKeyValueStore(field_data_cache))
+        ...
+    )
+</code></pre>
+                <aside class="notes">As we can see, student data is stored in a key-value store managed by django. DjangoKeyValueStore is not very interesting to look at; all the intelligence is in field_data_cache. What about authored_data? authored_data is descriptor._field_data, but wtf is a descriptor?</aside>
+
+                <aside class="notes">A descriptor can be an instance of xblock.internal.CourseDescriptorWithMixins. Which is very weird because this class exists nowhere. Elsewhere, when loading another xblock, descriptor is an instance of xblock.internal.SequenceDescriptorWithMixins. In fact, descriptor are XBlock instances that are made to inherit from all classes listed in settings.XBLOCK_MIXINS. The xblock inherits thanks to magic performed by xblock.runtime.Mixologist:</aside>
+
+<pre><code>
+class Mixologist(object):
+    def __init__(self, mixins):
+        self._mixins = tuple(mixins)
+
+    def mix(self, cls):
+        ...
+        return type(
+            base_class.__name__ + 'WithMixins',   # class name
+            (base_class, ) + self._mixins,        # class bases
+            {'unmixed_class': base_class}         # class attributes
+        )
+</code></pre>
+                </section>
+
+                <section>
+                <aside class="notes">In Open edX, XBlocks inherit from XModuleMixin in order to expose XModule-specific services.
+
+
+                    (-> == "inherits from")
+                    CourseDescriptor -> SequenceDescriptor -> MakoModuleDescriptor -> XModuleDescriptor -> XModuleMixin -> XBlock
+                </aside>
+                    <pre><code>
+class XModuleMixin(XModuleFields, XBlock):
+    """
+    Fields and methods used by XModules internally.
+
+    Adding this Mixin to an :class:`XBlock` allows it to cooperate with old-style :class:`XModules`
+    """
+                 </code></pre>
+                
+                </section>
+    
+                <section>
+                    <h3>The common/djangoapps/student app</h3>
+                    <p>9k+ loc. What for?</p>
+                </section>
+
+                <section>
+                    <h3>Open edX Django project</h3>
+                    <pre>$ pip freeze | grep Django
+                    Django==1.8.12</pre>
+
+                    <pre>paver devstack lms # instead of ./manage.py runserver</pre>
+
+                    <blockquote>"Paver is a Python-based build/distribution/deployment scripting tool along the lines of Make or Rake."</blockquote>
+
+                    <pre>edx-platform/pavement.py
+...                   
+from pavelib import *</pre>
+
+                    <aside class="notes">One can choose between paver and manage.py for calling most mundane tasks. So if you wish to add some code to edx-platform, without actually forking the code, it's a good idea to patch manage.py or to create your own command that does almost the same thing as manage.py.</aside>
+                </section>
+
+                <section>
+                    <h3>capa</h3>
+                    <p>TODO wtf is capa? 10k js loc in common/static/js/capa/. 11k in common/lib/capa.</p>
+
+                    <p>CAPA = "Corrective Action and Preventive Actions" or "Computer-Assisted Personalized Approach" ?</p>
+
+                    <p>According to http://www.lon-capa.org/ CAPA is a CMS that has existed since 1992 o_O</p>
+
+                    <p>CAPA is a folder that contains many xblocks but... I can't seem to find any reference to xblock in this django app. No reference to django either, by the way.</p>
+
+                    <p>It quacks like an xblock, it flies like an XBlock, but it's not an xblock.</p>
+
+                    <img src="./img/lon-capa_team.jpg" alt="LON-CAPA team">
+
+                    <p>If I understand correctly, the CAPA problems are the basic problems included in a course. For more sophisticated problems, you need to refer to the more modern XBlocks API. Since CAPA problems are outdated, we won't talk about them too much.</p>
+                    <aside class="notes">As you can guess from the computer equipment in this picture, LON-CAPA was developed a long time before the Open edX team was assembled.</aside>
+                </section>
+
+                <section>
+                    <h3>Opaque keys</h3>
+                    <p>TODO</p>
+                </section>
+
+                <section>
+                    <h3>ORA2: Open peer assessment</h3>
+                </section>
+
+                <section>
+                    <h3>Get in touch</h3>
+                    <div class="table">
+                        <div class="table-row">
+                            <div class="table-cell">
+                                <img src="./img/regis.png" alt="Régis">
+                                <p class="sidespace">regis@openfun.fr</p>
+                            </div>
+                            <div class="table-cell sidespace">
+                                <img src="./img/richard.png" alt="Richard">
+                                <p class="sidespace">richard@fun-mooc.fr</p>
+                            </div>
+                            <div class="table-cell sidespace">
+                                <img src="./img/sylvain.png" alt="Sylvain">
+                                <p class="sidespace">sylvain@fun-mooc.fr</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p>Slides available at <br>
+                    <a href="https://github.com/regisb/openedx-conference-2016">https://github.com/regisb/openedx-conference-2016</a></p>
+                </section>
+			</div>
+		</div>
+
+        <!--Reveal.js-->
+		<script src="lib/js/head.min.js"></script>
+		<script src="lib/js/jquery-1.11.3.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+        <!--JS plots-->
+        <script src="lib/js/d3.v3.min.js"></script>
+
+		<script>
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: false,
+				progress: true,
+				history: true,
+				center: true,
+                slideNumber: true,
+
+				transition: 'fade', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+		</script>
+        
+        <!--Count lines of code-->
+        <script src="js/edx-platform-cloc.js"></script>
+	</body>
+</html>
