@@ -1,5 +1,5 @@
 (function(){
-    Reveal.addEventListener('edx-platform-cloc', function() {
+    var edxPlatformCloc = function() {
         var data = {
             name: "edx-platform",
             size: 429347,
@@ -211,5 +211,7 @@
                     .text(function(d) { return d.name === "empty" ? "" : d.name; });
 
         d3.select(self.frameElement).style("height", height + "px");
-    });
+    };
+    
+    Reveal.addEventListener('edx-platform-cloc', edxPlatformCloc);
 })();

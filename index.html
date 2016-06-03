@@ -6,7 +6,7 @@
 
 		<title>Open edX 101: A Source Code Review</title>
 
-		<meta name="description" content="Open edX 101: A Source Code Review">
+		<meta name="description" content="Open edX 101: A Source Code Review | Régis Behmo, Open edX Conference, June 14 2016 | Stanford, CA">
 		<meta name="author" content="Régis Behmo">
 
 		<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -17,10 +17,11 @@
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/night.css" id="theme">
 		<link rel="stylesheet" href="css/font-awesome.min.css">
-        <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
 
 		<!-- Code syntax highlighting -->
         <link rel="stylesheet" href="lib/css/zenburn.css">
+        <!--<link rel="stylesheet" href="lib/css/solarized-dark.css">-->
 
 		<!-- Printing and PDF exports -->
 		<script>
@@ -93,7 +94,7 @@
                     <a href="http://hakim.se">Régis Behmo</a> (<a href="http://github.com/regisb">@regisb</a>) <br>
                     Open edX Conference, June 14 2016 | Stanford, CA
 					</p>
-                    <aside class="notes">Hi everyone! My name is Régis and together, for the next 30 minutes or so, we are going to read the source code of Open edX.</aside>
+                    <aside>Hi everyone! My name is Régis and together, for the next 30 minutes or so, we are going to read the source code of Open edX.</aside>
 				</section>
 
 				<!--<section class="no-slide-number">-->
@@ -105,31 +106,33 @@
                 <!--</section>-->
 
                 <section>
-                    <aside class="notes">When I was first confronted with the Open edX source code, two years ago, that's when I joined the FUN project at the French ministry of higher education, well exploring the Open edX source code was pretty hard. I was already a senior python and django developer, so I was familiar with the architecture of a standard django project, and some non-standard django projects as well. The Open edX documentation is really good, especially for a project that large. Yet there were many surprises along the way, as I explored the different modules to develop new features or resolve weird bugs. 
+                    <aside>When I was first confronted with the Open edX source code, two years ago, that's when I joined the FUN project at the French ministry of higher education, well exploring the Open edX source code was pretty hard. I was already a senior python and django developer, so I was familiar with the architecture of a standard django project, and some non-standard django projects as well. The Open edX documentation is really good, especially for a project that large. Yet there were many surprises along the way, as I explored the different modules to develop new features or resolve weird bugs. 
 
                         What I tried to do in this presentation is to explore the important pieces of code that make up the Open edX project. Now I need to give you a word of warning here: I have been an Open edX developer since 2014; that's three full years after the first commit to edx-platform was made.
-                    </aside>
 
-<pre class="fragment"></code class="bash">regis@host:~/repos/edx-platform$ git log | tail -1
-commit cc1de22e2621c7fa1199750cf13ba57c937b9d98
-Author: Piotr Mitros <pmitros@mit.edu>
-Date:   Wed Dec 7 09:28:16 <span class="green">2011</span> -0500
-
-    Initial commit</pre></code>
-
-                    <aside class="notes">
                         I have made a couple contributions to Open edX, but nothing major; I'm part of the Open edX community, but I don't work at edX. What I mean is that there is a probability that I say very wrong things about Open edX here, and that probability is much bigger than zero. If you spot a mistake, please tell me about it in the question session or later; the slides will be available on the internet and I will update them to include your comments.
                     </aside>
+
+<pre class="fragment">regis@host:~/repos/edx-platform$ git log | tail -1
+commit cc1de22e2621c7fa1199750cf13ba57c937b9d98
+Author: Piotr Mitros &lt;pmitros@mit.edu&gt;
+Date:   Wed Dec 7 09:28:16 <span class="green">2011</span> -0500
+
+    Initial commit</pre>
                 </section>
 
                 <section>
-                    <h3>What is Open edX made of?</h3>
-                    <aside class="notes">
+                    <h3>Open edX from above</h3>
+                    <aside>
     Alright, let's get started. In order to make this presentation, I did what most developers do when they first start hacking on Open edX: I downloaded a virtual machine containing the latest stable release of Open edX. Everything we say from now on will be about dogwood.3.
 
     Before we dive deep into the Open edX source code, what I would like to do now is to try to give us an overview of how exactly the Open edX source code is organized.
 
-    Here is the list of folders that contain major Open edX repositories:
+    Here is the list of folders that contain major Open edX repositories.
+
+    As we can see, it's wrong to assume that Open edX consists of a single code repository. There are mandatory repositories, such as edx-platform and its dependencies from the virtual environment; there is a theming repo that you may wish to create and install yourselves. The forum repository is pretty much mandatory as well, if you wish to provide your users a discussion service. And there are optional ecommerce repositories, which you don't need if your platform does not offer paying products.
+
+                    Let's take a look at the first repository listed here. edx-platform is actually the biggest code repository that is necessary to run Open edX. But how big is it? Let me do a quick survey here: how many lines of code do you think there are in edx-platform? I'm talking about actual code: not comments, not blank lines and not vendor dependencies (but test code is included).
                     </aside>
 
 <pre class="fragment"># LMS + CMS
@@ -152,17 +155,11 @@ Date:   Wed Dec 7 09:28:16 <span class="green">2011</span> -0500
 /edx/app/edxapp/venvs/edxapp
     ...
 </pre>
-
-                    <aside class="notes">
-    As we can see, it's wrong to assume that Open edX consists of a single code repository. There are mandatory repositories, such as edx-platform and its dependencies from the virtual environment; there is a theming repo that you may wish to create and install yourselves. The forum repository is pretty much mandatory as well, if you wish to provide your users a discussion service. And there are optional ecommerce repositories, which you don't need if your platform does not offer paying products.
-
-                    Let's take a look at the first repository listed here. edx-platform is actually the biggest code repository that is necessary to run Open edX. But how big is it? Let me do a quick survey here: how many lines of code do you think there are in edx-platform? I'm talking about actual code: not comments, not blank lines and not vendor dependencies.
-                    </aside>
 				</section>
     
                 <section>
-                    <aside class="notes">As an indication, here is the line count for several well known projects, written in Python and in other languages, including more languages such as Java or php. Does that change your estimates?</aside>
-                    <h3>What is Open edX made of?</h3>
+                    <aside>As an indication, here is the line count for several well known projects, written in Python and in other languages, such as Java or php. Does that change your estimates?</aside>
+                    <h3>Open edX from above</h3>
                     <h4>edx-platform</h4>
                     <ul>
                         <li>CPython 3.5.1 (Python, C, C++): 967725</li>
@@ -178,10 +175,10 @@ Date:   Wed Dec 7 09:28:16 <span class="green">2011</span> -0500
                 </section>
 
                 <section>
-                    <aside class="notes">edx-platform contains 427k lines of code. Outside of python itself, this is the largest python repository that I know of. I can't emphasize this enough: Open edX is really big.
+                    <aside>edx-platform contains 427k lines of code. Outside of python itself, as far as I know, this is the largest python project that fits in a single repository. edx-platform is twice as big as Django. And that's just for edx-platform; as I mentioned, edx-platform is one of many Open edX repositories. I can't emphasize this enough: Open edX is really big.
                         
-    Why is that important? Well it's important for me. Remember the title of this presentation? "Open edX: A source code review". When I submitted this talk and started working on the presentation, I had NO IDEA I would have to dive through so much code. And of course, I didn't. A lot of the code that you are going to find in Open edX is more-or-less standard Django code. What I would like to talk about in this presentation is the code that is non-standard, tricky or difficult to grasp. To do that, we need to understand what edx-platform is made of.</aside>
-                    <h3>What is Open edX made of?</h3>
+    Why is that important? Well it's important for me. When I submitted this talk and started working on the presentation, my ambition was to go through most parts of the source code and highlight the best pieces I found. But with that much code, this approach just wasn't feasible. In fact, a lot of the code that you are going to find in Open edX is more-or-less standard Django code. What I would like to talk about in this presentation is the code that is non-standard, tricky or difficult to grasp. To do that, we need to understand what edx-platform is made of. Let's take a look how the edx-platform code is organised, physically speaking.</aside>
+                    <h3>Open edX from above</h3>
                     <h4>edx-platform</h4>
                     <ul>
                         <li>CPython 3.5.1 (Python, C, C++): 967725</li>
@@ -198,9 +195,8 @@ Date:   Wed Dec 7 09:28:16 <span class="green">2011</span> -0500
                 </section>
 
                 <section>
-                    <h3>What is Open edX made of?</h3>
-                    <h4>edx-platform</h4>
-                    <aside class="notes">The composition of edx-platform is not too surprising for a django project. The repo is mostly made of python code with a lot of web-specific code: javascript and some coffeescript, css (both vanilla css and compiled css) and html. Those of you that have worked with Open edX know that running a server requires a rather long preliminary phase for compiling js and css code. This compile time is caused by the SASS and the Coffeescript code. Nothing out of the ordinary. Now let's take a closer look at how this code is organized.</aside>
+                    <h3>Inside edx-platform</h3>
+                    <aside>edx-platform is mostly made of Python, javascript, html and css code. That's not surprising at all for a large web project. Those of you that have worked with Open edX before know that running a server requires a rather long preliminary phase for compiling javascript and css code. This compile time is caused by the 13% of SASS and the Coffeescript code. Now let's take a closer look at how this code is organized.</aside>
 
 <!--Command run was: cloc --exclude-list-file=./cloc_exclude --exclude-dir=node_modules,./common/static/fonts/vendor,./common/static/js/vendor,./common/static/css/vendor,./cms/static/sass/vendor,./lms/static/js/vendor,./lms/static/sass/vendor,./lms/static/css/vendor,./static/vendor,vendor_extra/ $1-->
 <pre style="text-align:center"><code class="bash">cloc --exclude-dir=&lt;vendor-folders&gt; edx-platform</code></pre>
@@ -226,19 +222,18 @@ SUM:                          3777          97396         145736         <span c
                 </section>
 
                 <section data-state="edx-platform-cloc" data-background-color="#fff">
-                    <aside class="notes">In this graph, we have plotted the different components of edx-platform. The lines of code of each component is proportional to its angular range. The further we go from the center, the deeper we go in the folder structure of the repository. We can see that the edx-platform code is rather well separated in modular components. The lms and the cms are clearly visible; if you've never run Open edX before: edx-platform is not one single django project, but more like two distinct django projects with some common code, stored in the common and openedx folders.
+                    <aside>In this graph, we have plotted the different components of edx-platform. The number of lines of code of each component is proportional to its angular range. The further we go from the center, the deeper we go in the folder structure of the repository. We can see that the edx-platform code is rather well separated in modular components. The lms and the cms are clearly visible; if you've never run Open edX before: edx-platform is not one single django project, but more like two distinct django projects with some common code, stored in the common and openedx folders, here and there.
 
-We can spot a lot of js code, but also a lot of test code, including in the javascript folders, which is comforting.
+We can spot a lot of javascript code, but also a lot of test code, including in the javascript folders, which is comforting.
                         
 The LMS is the django project provided to the students; the CMS is used by the course staff to design and administer their courses. As we can see, the LMS-specific code is much more complex than the CMS-specific code. Note however that the code common to both the LMS and the CMS is very large as well; almost as large as the LMS-specific code. The LMS is made of many different django applications, the largest of which is the courseware, which is in charge of displaying a course to a user. On the other hand, the CMS is almost entirely made of one single big django application, called the contentstore. The common code contains a variety of application, but there is one library that stands out very clearly. The xmodule package is simply huge. At more than 65k lines of code, it can be considered as a very big python project in its own right.
 </aside>
                     <div id="edx-platform-cloc"></div>
 				</section>
 
-
                 <section>
-                    <h3>What is Open edX made of?</h3>
-                    <h4>dependencies</h4>
+                    <h3>Inside edx-platform</h3>
+                    <aside>Here we compare edx-platform with other Open edX repositories that are included in the devstack. The largest of them is the cs_comments_service project, written in ruby. It provides an HTTP API that edx-platform connects to in order to display the forums in the LMS. The ecommerce repository is for selling products on Open edX: it's large but it hasn't been created specifically for Open edX. Then there is the virtual environment that contains all the edx-platform dependencies</aside>
 <pre># LMS + CMS
 /edx/app/edxapp/edx-platform       # 427321
 
@@ -260,8 +255,9 @@ The LMS is the django project provided to the students; the CMS is used by the c
 </pre>
                 </section>
                 <section>
-                    <h3>What is Open edX made of?</h3>
-                    <h4>virtual environment</h4>
+                    <h3>Inside edx-platform</h3>
+                    <h4>dependencies</h4>
+                    <aside>The virtual environment contains quite a few packages. Here I listed a few of the Open edx-specific repositories. There are many xblocks, such as the recommender-xblock, edx-sga and edx-jsme (the molecular editor). Most of these xblocks clock at about 2k to 3k lines of code, which tells us that it's not so complex to create an xblock. What is impressive here is the size of the ora2 repository, for peer-assessed exams. We'll come back to that later.</aside>
 <pre>
 <span class="green">/edx/app/edxapp/venvs/edxapp</span>
     ora2                        # 31245
@@ -285,16 +281,16 @@ The LMS is the django project provided to the students; the CMS is used by the c
                 </section>
 
                 <section>
-                    <h3>How <del>the sausage</del> Open edX is made</h3>
+                    <h3>Open edX from the inside</h3>
                     <h4 class="fragment">Viewing a course</h4>
-                    <aside class="notes">We have spent a lot of time counting lines of code in Open edX and that has been a bit tedious, sorry about that. Yet I feel it has been necessary in order to understand where the complexity lies in the project. We have seen where the most code is written, and as we look into a specific view, we can expect to pay a visit to these places. Now let's take a look at a specific django view.</aside>
+                    <aside>We have spent a lot of time counting lines of code in Open edX and that has been a bit tedious, sorry about that. Yet I feel it has been necessary in order to understand where the complexity lies in the project. We have seen the places where most code is written, and as we explore Open edX code, we can expect to pay a visit to these places. Now what I would like to do is take a specific view, in the django sense, and see where it goes. This should tell us something about how the sausage is made.</aside>
                 </section>
 
                 <section>
-                    <h3>How Open edX is made</h3>
+                    <h3>Open edX from the inside</h3>
                     <h4>Viewing a course</h4>
 
-                    <aside class="notes">Let's run an LMS! With the following commands, we download a virtual machine and provision it with a recent install of Open edX. Just like previously, we run the latest stable release, which is dogwood.3.
+                    <aside>Let's run an LMS! With the following commands, we download a virtual machine and provision it with a recent install of Open edX. We keep using the latest stable release of Open edX, which is dogwood.3.
                     </aside>
                     
 <pre class="fragment" style="width: 1124px;"><code class="bash">$ curl -L https://raw.github.com/edx/configuration/master/vagrant/release/devstack/Vagrantfile > Vagrantfile
@@ -302,17 +298,21 @@ $ OPENEDX_RELEASE="named-release/dogwood.3" vagrant up && vagrant ssh
 $ sudo su edxapp
 $ paver devstack lms
 ...
-
+Starting development server at http://0.0.0.0:8000/
 </code></pre>
                 </section>
 
-                <section data-background-image="./img/lms_lesson1.png"></section>
-                <section data-background-image="./img/lms_lesson1_url.png"></section>
+                <section data-background-image="./img/lms_lesson1.png">
+                    <aside>Now we just access the content of a course from a web browser. See the URL that has just been accessed?</aside>
+                </section>
+                <section data-background-image="./img/lms_lesson1_url.png">
+                    <aside>We are going to do what django developers do all day -- actually, what backend web developers do all day: find the code that generates the page with this URL.</aside>
+                </section>
 
                 <section>
-                    <h3>How Open edX is made</h3>
+                    <h3>Open edX from the inside</h3>
                     <h4>Viewing a course</h4>
-                    
+                    <aside>Let's follow the trail! we can find the regular expression that corresponds to the url of the courseware page in the url file of the LMS. This file leads us to the index function of the courseware views module.</aside>
                     <img src="./img/lms_lesson1_url_alone.png" alt="courseware url">
 <pre>lms/urls.py</pre>
 <pre>url(
@@ -323,31 +323,36 @@ $ paver devstack lms
     name='courseware_section',
 )</pre>
 
-
                 </section>
+
                 <section>
-                    <h2>Inside an LMS view</h2>
-                    <table>
-                        <tr>
-                            <td>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>We go down the rabbit hole and take a look at the content of the index view from the courseware views module. What can we find in there? First of all, the course is loaded by its course_key. Here, course is an object that -- apparently -- contains all the information related to the course. We can even use the course object to fetch the object that corresponds to the section inside the course. But what is the type of the course object?</aside>
 <pre>lms/djangoapps/courseware/views.py</pre>
-<pre><code class="python">def index(request, course_id, chapter, section):
+<pre>def index(request, course_id, chapter, section):
     ...
-    course = get_course_with_access(..., course_key, ...) 
-    section_module = get_module_for_descriptor(
+    <span class="fragment highlight-green">course = get_course_with_access(..., course_key, ...)</span>
+    <span class="fragment highlight-blue">section_module</span> = get_module_for_descriptor(
         user,
         request,
         section_descriptor,
         field_data_cache,
         course_key,
         position,
-        course=course
-    )
-</code></pre>
-                            </td>
-                            <td>
-<pre class="fragment"><code class="python">pprint(course.__class__.__mro__)
-(&lt;class 'xblock.internal.CourseDescriptorWithMixins'&gt;,
+        <span class="fragment highlight-green">course=course</span>
+    )</pre>
+                </section>
+
+                <section>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>Here we print the class and the base classes of the course object. There are many of them, as we can see. The class of the course instance is CourseDescriptorWithMixins from the internal module of the xblock package. And that's our first encounter with xblocks. That was fast...
+                    
+                        I want to step back for a minute and summarize how we got there.
+                    </aside>
+<pre style="font-size: 45%;">pprint(course.__class__.__mro__) # class and all base classes of 'course'
+(&lt;class '<span class="fragment highlight-green">xblock.internal.CourseDescriptorWithMixins</span>'&gt;,
  &lt;class 'xmodule.course_module.CourseDescriptor'&gt;,
  &lt;class 'xmodule.course_module.CourseFields'&gt;,
  &lt;class 'xmodule.seq_module.SequenceDescriptor'&gt;,
@@ -379,11 +384,382 @@ $ paver devstack lms
  &lt;class 'xblock.core.SharedBlockBase'&gt;,
  &lt;class 'xblock.plugin.Plugin'&gt;,
  &lt;type 'object'&gt;)
-</code></pre>
-                            </td>
-                        </tr>
-                    </table>
+</pre>
                 </section>
+
+                <section>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>We have booted a local LMS server, opened a url from the courseware, followed that url to find the corresponding django view, located in the views module of the courseware app. That view contains an interesting piece of code that loads the course, and then loads the course section that we are accessing. What we observe is that a course is represented by an instance of CourseDescriptorWithMixins. There is something surprising about that, even for experienced django developers. Actually, the CourseDescriptorWithMixins is not declared in the internal module of the xblock package. You can go take a look there, you won't find anything. In fact, the CourseDescriptorWithMixins class is not declared anywhere. Let's go back to the list of base classes of the course object to understand what is happening here.</aside>
+                    
+                    <pre class="fragment" style="text-align: center;">http://.../courses/...edX+DemoX+Demo_Course/courseware/interactive_demonstrations/19a30.../</pre>
+                    <i class="fa fa-arrow-down fragment"></i>
+                    <pre class="fragment" style="text-align: center;">courseware.views.index</pre>
+                    <i class="fa fa-arrow-down fragment"></i>
+                    <pre class="fragment" style="text-align: center;">course = get_course_with_access(...)</pre>
+                    <i class="fa fa-arrow-down fragment"></i>
+                    <pre class="fragment" style="text-align: center;">xblock.internal.CourseDescriptorWithMixins</pre>
+                    <i class="fa fa-arrow-down fragment"></i>
+                    <pre class="fragment" style="text-align: center;">?</pre>
+                </section>
+
+                <section>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>The course object is an instance of CourseDescriptorWithMixins but we notice that one of its base classes is CourseDescriptor from the module called course_module inside the xmodule package. What happens behind the scenes, is the the CourseDescriptorWithMixins class is generated dynamically as a combination of multiple classes, including the CourseDescriptor class. But how exactly is the CourseDescriptorWithMixins class generated?
+                        <!--Elsewhere, when loading another xblock, descriptor is an instance of xblock.internal.SequenceDescriptorWithMixins. In fact, descriptor are XBlock instances that are made to inherit from all classes listed in settings.XBLOCK_MIXINS. The xblock inherits thanks to magic performed by xblock.runtime.Mixologist:-->
+                    </aside>
+
+<pre style="font-size: 45%;">pprint(course.__class__.__mro__) # class and all base classes of 'course'
+(&lt;class '<span class="green">xblock.internal.CourseDescriptorWithMixins</span>'&gt;,
+ &lt;class '<span class="fragment highlight-green">xmodule.course_module.CourseDescriptor</span>'&gt;,
+ &lt;class 'xmodule.course_module.CourseFields'&gt;,
+ &lt;class 'xmodule.seq_module.SequenceDescriptor'&gt;,
+ &lt;class 'xmodule.seq_module.SequenceFields'&gt;,
+ &lt;class 'xmodule.seq_module.ProctoringFields'&gt;,
+ &lt;class 'xmodule.mako_module.MakoModuleDescriptor'&gt;,
+ &lt;class 'xmodule.mako_module.MakoTemplateBlockBase'&gt;,
+ &lt;class 'xmodule.xml_module.XmlDescriptor'&gt;,
+ &lt;class 'xmodule.xml_module.XmlParserMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleDescriptor'&gt;,
+ &lt;class 'xmodule.x_module.HTMLSnippet'&gt;,
+ &lt;class 'xmodule.x_module.ResourceTemplates'&gt;,
+ &lt;class 'lms.djangoapps.lms_xblock.mixin.LmsBlockMixin'&gt;,
+ &lt;class 'xmodule.modulestore.inheritance.InheritanceMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleFields'&gt;,
+ &lt;class 'xblock.core.XBlock'&gt;,
+ &lt;class 'xblock.mixins.XmlSerializationMixin'&gt;,
+ &lt;class 'xblock.mixins.HierarchyMixin'&gt;,
+ &lt;class 'xmodule.mixin.LicenseMixin'&gt;,
+ &lt;class 'xmodule.modulestore.edit_info.EditInfoMixin'&gt;,
+ &lt;class 'xblock.XBlockMixin'&gt;,
+ &lt;class 'xblock.core.XBlockMixin'&gt;,
+ &lt;class 'xblock.mixins.ScopedStorageMixin'&gt;,
+ &lt;class 'xblock.mixins.RuntimeServicesMixin'&gt;,
+ &lt;class 'xblock.mixins.HandlersMixin'&gt;,
+ &lt;class 'xblock.mixins.IndexInfoMixin'&gt;,
+ &lt;class 'xblock.mixins.ViewsMixin'&gt;,
+ &lt;class 'xblock.core.SharedBlockBase'&gt;,
+ &lt;class 'xblock.plugin.Plugin'&gt;,
+ &lt;type 'object'&gt;)
+</pre>
+                </section>
+
+                <section>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>A CourseDescriptorWithMixins class is created by an instance of the Mixologist class. Let's take a look at this class. When a mixologist is instantiated, it is passed a list of classes. And when the mix method is called on a class, a new type is created that inherits from the mixin classes of the mixologist. But what kind of mixins do we usually pass to the constructor of the Mixologist class? In both the CMS and the common code, you'll find the following piece of code. HAHA! Now we can see that the default LMS and CMS base classes of a course are defined in a django setting.</aside>
+
+                    <div class="fragment">
+<pre>xblock/runtime.py:</pre>
+<pre><code class="python">
+class Mixologist(object):
+    def __init__(self, mixins):
+        self._mixins = tuple(mixins)
+
+    def mix(self, cls):
+        ...
+        return type(
+            base_class.__name__ + 'WithMixins',   # class name
+            (base_class, ) + self._mixins,        # class bases
+            {'unmixed_class': base_class}         # class attributes
+        )
+</code></pre>
+                    </div>
+
+                    <div class="fragment">
+<pre>cms/djangoapps/contentstore/views/component.py
+common/lib/xmodule/xmodule/modulestore/__init__.py</pre>
+<pre><code class="python">mixologist = Mixologist(settings.XBLOCK_MIXINS)</code></pre>
+                    </div>
+                </section>
+
+                <section>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>The XBLOCK_MIXINS setting is defined both in the LMS and the CMS and it has almost the same value in both. </aside>
+                
+<pre>lms/envs/common.py
+cms/envs/common.py</pre>
+<pre><code class="python">XBLOCK_MIXINS = (
+    LmsBlockMixin,
+    InheritanceMixin,
+    XModuleMixin,
+    EditInfoMixin,
+    AuthoringMixin, # (In the CMS only)
+)</code></pre>
+                </section>
+
+                <section>
+                    <h3>Btw, what is a mixin?</h3>
+                    <aside>Before we go any further, I'm not sure everyone knows what a mixin is. Quick survey: who knows exactly what a mixin is? It's a notion that is very popular in Python, but not so much in some other languages. Come on, don't be shy. Ok I'll give you the definition by wikipedia. 
+                        
+                        This definition is a bit abstract, so let's see an example. Shape is a class that can serve as the base class of many different classes ; for instance, the Square class, and the Triangle class. All these shapes share a common method, the perimeter method which computes the sum of the lengths of the shape edges. Now let's say we need a colored shape : a shape with color. Applying colors is a neat feature, but not every class needs it. For instance, we only need colored squares, but not colored triangles. We definitely don't want to bloat the definition of triangles with a useless colorize method. So we create a ColorMixin that defines the colorize feature; note that the ColorMixin does not work by itself, because it has no edges attribute. Then the ColoredSquare class inherits from both the Square class and the ColorMixin class and exhibits properties from both worlds.
+                    
+                        ...
+                        Ok, did that make it clear what a mixin is? In brief, a mixin is a class that provides a piece of functionality. It's like an interface, but with some partially-defined methods.
+
+                        Ok let's return to the course descriptor. 
+                    </aside>
+                    <!--<p class="fragment">A mixin is a class that provides a piece of functionality.</p>-->
+                    <div class="fragment">
+                        <blockquote>Wikipedia: "In object-oriented programming languages, a mixin is a class that contains methods for use by other classes"</blockquote>
+                    </div>
+<pre class="fragment" style="font-size: 50%;"><code class="python">class Shape(object):
+    def __init__(self):
+        self.edges = []
+
+    def perimeter(self):
+        return sum([e.size for e in self.edges])
+
+class Square(Shape):
+    def __init__(self):
+        self.edges = make_square()
+
+class Triangle(Shape):
+    def __init__(self):
+        self.edges = make_triangle()
+
+class ColorMixin(object):
+    def colorize(self, color):
+        for edge in self.edges:
+            edge.color = color
+
+class ColoredSquare(Square, ColorMixin):
+    pass</code></pre>
+                </section>
+
+                <section>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>We see that the following mixins are added to every coursedescriptor object. These mixins provide some functionalities to the coursedescriptor. In the code, the XBLOCK_MIXINS setting is preceded by a comment that explains why these mixins need to be added. Let's read this comment. The comment tells us that so-called modulestore objects are in charge of creating xblocks, but actually the responsibility of creating xblocks should be assigned to Runtime/Application objects. This raises a couple questions.</aside>
+                
+<pre>lms/envs/common.py
+cms/envs/common.py</pre>
+<pre><code class="python fragment"># These are the Mixins that should be added to every XBlock.
+# This should be moved into an XBlock Runtime/Application object
+# once the responsibility of XBlock creation is moved out of modulestore - cpennington</code></pre>
+<pre><code class="python">XBLOCK_MIXINS = (
+    LmsBlockMixin,
+    InheritanceMixin,
+    XModuleMixin,
+    EditInfoMixin,
+    AuthoringMixin, # (In the CMS only)
+)</code></pre>
+                </section>
+
+                <section>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>First of all, what is an xblock? Then, what is a runtime? And finally, what is a modulestore?
+                    
+Ok let's talk about xblocks. Now I know this is the Open edX conference; certainly, many of you are very familiar with the concept of xblocks. Who knows what an xblock is? 
+                    
+                    That's a lot of people / Fewer than I expected.
+                
+Those of you who know what an xblock is, let me ask you: who knows how an XBlock is instantiated in Open edX? In other words, how do you create an XBlock instance?
+                
+Much less people, that's what I was hoping for, to be honest / Wow that's a lot of people. Well I'll show the next slides anyway, for posterity.                    </aside>
+
+<pre><code class="python"># These are the Mixins that should be added to every XBlock.
+# This should be moved into an XBlock Runtime/Application object
+# once the responsibility of XBlock creation is moved out of modulestore - cpennington</code></pre>
+<ol>
+    <li class="fragment">What is an "XBlock"?</li>
+    <li class="fragment">What is an "XBlock Runtime/Application"?</li>
+    <li class="fragment">What is a "modulestore"?</li>
+</ol>
+                </section>
+
+                <section>
+                    <h3>XBlocks from the inside</h3>
+                    <aside>There are many tutorials and videos that explain what xblocks are, from a 10k meter view. Here are two videos that I think really stand out with their clarity. Both include explanations by Ned Batchelder. Usually, xblocks are described as the building blocks of a course: a course is an xblock that contains other xblocks. It's "xblocks all the way down" as Ned says. Videos are instances of xblocks, and so are polls, peer assessed exams, and many others: all the components of a course are xblock instances. There are hundreds of different kinds of xblocks that you can mish mash together to build interesting, fun, interactive courses.
+
+                    There is the xblock directory located at xblocks.org. Don't go to xblocks.com, that's a website for quilting. It would make things even more confusing.
+                    </aside>
+
+                    <div class="fragment">
+                        <p>General explanation of Open edX and XBlocks (2013) (2'24): <a href="https://www.youtube.com/watch?v=dTS-nsf7d3Q">https://www.youtube.com/watch?v=dTS-nsf7d3Q</a></p>
+                        <p>"XBlocks all the way down" -- Ned Batchelder, Appsembler webinar (15'): <a href="http://www.appsembler.com/blog/open-edx-xblocks-webinar/">http://www.appsembler.com/blog/open-edx-xblocks-webinar/</a></p>
+                    </div>
+
+                    <p><span class="fragment">Examples: </span><span class="fragment">course</span><span class="fragment">, poll</span><span class="fragment">, peer assessed exams</span><span class="fragment">,<br>jsme (molecule editor)</span><span class="fragment">...</span></p>
+
+                    <p class="fragment">The xblock directory: <del>http://xblocks.com</del> <a href="http://xblocks.org/">http://xblocks.org/</a></p>
+                </section>
+
+                <section data-background-image="./img/xblocks.com.png"></section>
+
+                <section>
+                    <h3>XBlocks from the inside</h3>
+                    <aside>Anyway! As Ned says, it's xblocks all the way down.</aside>
+                    <p class="fragment">"XBlocks all the way down" -- Ned Batchelder</p>
+                </section>
+                <section data-background-image="./img/turtles.jpg">
+                    <aside>Try to imagine Open edX as a planet floating through space on the back of a giant turtle. Anyway! Sorry about that. Now let's return to our CourseDescriptorWithMixin instance, shall we?</aside>
+                    <h3>XBlocks from the inside</h3>
+                    <p>"XBlocks all the way down" -- Ned Batchelder</p>
+                </section>
+
+                <section>
+                    <h3>XBlocks from the inside</h3>
+                    <aside>As we expected, the course object is not only an instance of CourseDescriptorWithMixins but also an XBlock instance. But who has the responsibility of instantiating this xblock? To answer this question, we need to give some technical details about xblocks.</aside>
+<pre style="font-size: 45%;">pprint(course.__class__.__mro__) # class and all base classes of 'course'
+(&lt;class '<span class="fragment highlight-green">xblock.internal.CourseDescriptorWithMixins</span>'&gt;,
+ &lt;class 'xmodule.course_module.CourseDescriptor'&gt;,
+ &lt;class 'xmodule.course_module.CourseFields'&gt;,
+ &lt;class 'xmodule.seq_module.SequenceDescriptor'&gt;,
+ &lt;class 'xmodule.seq_module.SequenceFields'&gt;,
+ &lt;class 'xmodule.seq_module.ProctoringFields'&gt;,
+ &lt;class 'xmodule.mako_module.MakoModuleDescriptor'&gt;,
+ &lt;class 'xmodule.mako_module.MakoTemplateBlockBase'&gt;,
+ &lt;class 'xmodule.xml_module.XmlDescriptor'&gt;,
+ &lt;class 'xmodule.xml_module.XmlParserMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleDescriptor'&gt;,
+ &lt;class 'xmodule.x_module.HTMLSnippet'&gt;,
+ &lt;class 'xmodule.x_module.ResourceTemplates'&gt;,
+ &lt;class 'lms.djangoapps.lms_xblock.mixin.LmsBlockMixin'&gt;,
+ &lt;class 'xmodule.modulestore.inheritance.InheritanceMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleMixin'&gt;,
+ &lt;class 'xmodule.x_module.XModuleFields'&gt;,
+ &lt;class '<span class="fragment highlight-green">xblock.core.XBlock</span>'&gt;,
+ &lt;class 'xblock.mixins.XmlSerializationMixin'&gt;,
+ &lt;class 'xblock.mixins.HierarchyMixin'&gt;,
+ &lt;class 'xmodule.mixin.LicenseMixin'&gt;,
+ &lt;class 'xmodule.modulestore.edit_info.EditInfoMixin'&gt;,
+ &lt;class 'xblock.XBlockMixin'&gt;,
+ &lt;class 'xblock.core.XBlockMixin'&gt;,
+ &lt;class 'xblock.mixins.ScopedStorageMixin'&gt;,
+ &lt;class 'xblock.mixins.RuntimeServicesMixin'&gt;,
+ &lt;class 'xblock.mixins.HandlersMixin'&gt;,
+ &lt;class 'xblock.mixins.IndexInfoMixin'&gt;,
+ &lt;class 'xblock.mixins.ViewsMixin'&gt;,
+ &lt;class 'xblock.core.SharedBlockBase'&gt;,
+ &lt;class 'xblock.plugin.Plugin'&gt;,
+ &lt;type 'object'&gt;)
+</pre>
+                </section>
+
+                <section>
+                    <h3>XBlocks from the inside</h3>
+
+                    <aside>
+<!--What is an XBlock? It'a class that has :-->
+<!--- A render method, that returns html-->
+<!--- Fields each field has a scope-->
+<!--- Interaction with the outside world is provided via services. These services are exposed by the runtime that has instantiated the XBlock.-->
+
+<!--What's a field?-->
+<!--What's a service? What's a runtime? How to declare new services and add them to the runtime?-->
+<!--Where are the xblock data stored?-->
+<!--Fragment ?-->
+
+Let's analyse an XBlock! For this presentation I selected xblock-poll, which was developed at opencraft. It's clean and concise, with just about 1k lines of python code. Note that for the sake of conciseness, some portions of code have been rewritten. The PollBlock class declares a student_view. There is also a studio_view, which is not indicated here because it does pretty much the same thing as the student_view. The student view method returns a fragment, which is simply a piece of html code that may include references to css or js resources.
+
+What is more interesting is the declaration of fields associated to the xblock. In order to actually do something, the xblock needs to have some data attached. This data is declared as fields. These fields remind us of fields associated to a django model class. But actually, django model fields and xblock fields are completely different things. In django, field values are associated to a model instance by the metaclass of the model. In xblocks, the fields are associated to an xblock instance. All this is very abstract, and honestly it's not too important; just remember one thing: xblock fields look similar to django model fields, but actually they are completely different things.
+
+Note that a scope is associated to each field. We'll come back to that in just a moment.
+
+This xblock also has associated methods. In one of them, we access the 'settings' service from the xblock runtime. The 'settings' service was demanded by the xblock as a decorator of the PollBlock class. We still haven't explained what a runtime is, but we can already say that it is supposed to provide services to xblocks. In fact, runtimes have multiple responsibilities.
+                    </aside>
+
+                    <p>XBlock-poll: "A user-friendly way to query students." <a href="https://github.com/open-craft/xblock-poll">https://github.com/open-craft/xblock-poll</a></p>
+<pre class="fragment" data-fragment-index="1">poll/poll.py</pre>
+<pre><code class="fragment python" data-fragment-index="5">@XBlock.wants('settings')</code><code class="fragment python" data-fragment-index="2">class PollBlock(XBlock):</code><code class="python fragment" data-fragment-index="4">
+    tally = Dict(scope=Scope.user_state_summary,
+                 help="Total tally of answers from students.")
+    choice = String(scope=Scope.user_state,
+                    help="The student's answer")
+    ...</code><code class="fragment python" data-fragment-index="3">
+    def studio_view(self):
+        ...
+        return xblock.fragment.Fragment(some_html_code)</code><code class="fragment python" data-fragment-index="6">
+    def img_alt_mandatory(self):
+        """
+        Determine whether alt attributes for images are configured to be mandatory.
+        """
+        settings_service = self.runtime.service(self, "settings")
+        if not settings_service:
+            return True
+        xblock_settings = settings_service.get_settings_bucket(self)
+        return xblock_settings.get('IMG_ALT_MANDATORY', True)</code>
+</pre>
+                </section>
+
+                <section>
+                    <h3>XBlock runtimes</h3>
+                    <aside>Let's cut to the chase: a runtime is also in charge of instantiating xblocks. As we can see, a runtime needs to be passed to the xblock constructor. In practice, the runtime passes itself to the new xblock instances.
+                        
+                        Now, like we said, runtimes also provide services to Xblocks. Services can be just about anything. The call to 'service' returns an object on which the xblock is free to call just any function. In particular, there exists a service in charge of reading and writing xblock field data. Let's take a look at that service. 
+                    </aside>
+                    <p>Runtime responsibilities:</p>
+                    <p class="fragment">1. Instantiate xblocks</p>
+<pre><code class="python fragment">class XBlock(...):
+    def __init__(self, runtime, ...):
+        ...</code></pre>
+
+<pre><code class="python fragment">class Runtime(object):
+    def construct_xblock_from_class(self, cls, scope_ids,
+                                    field_data=None, *args, **kwargs):
+        return self.mixologist.mix(cls)(runtime=self, scope_ids=scope_ids,
+                                        field_data=field_data, *args, **kwargs)</code></pre>
+
+                        <p class="fragment">2. Provide service to xblocks</p>
+<pre><code class="python fragment">settings_service = self.runtime.service(self, "settings")</code></pre>
+                        </p>
+                </section>
+                <section>
+                    <h3>XBlock runtimes</h3>
+                    <h4>XBlock serialization/deserialization ('field-data' service)</h4>
+                    <aside>The XBlock class inherits from the ScopedStorageMixin, which itself needs the field-data service. The 'field-data' service is expected to expose a `set_many` method that can be used to save xblock instances. This is for writing xblock data. What about reading xblock data? This is performed inside the Field class. Each field attribute reads into the field_data of the xblock -- in other words, the field-data service from the runtime. Then, the methods has and get are executed.</aside>
+<pre><code class="python fragment">class XBlock(..., ScopedStorageMixin, ...):
+    ...</code></pre>
+
+<pre><code class="fragment python">@RuntimeServicesMixin.needs('field-data')
+class ScopedStorageMixin(...):     
+    @property
+    def _field_data(self):
+        return self.runtime.service(self, 'field-data')
+
+    def force_save_fields(self, field_names):
+        ...
+        self._field_data.set_many(self, fields_to_save_json)</code></pre>
+
+<pre><code class="python fragment">class Field(...):
+    def __get__(self, xblock, ...):
+        """
+        Gets the value of this xblock. Prioritizes the cached value over
+        obtaining the value from the field-data service. Thus if a cached value
+        exists, that is the value that will be returned.
+        """
+        field_data = xblock._field_data
+
+        if field_data.has(xblock, self.name):
+            return value = self.from_json(field_data.get(xblock, self.name))
+        else: ...</code></pre>
+                </section>
+
+                <section>
+
+                <aside>In Open edX, XBlocks inherit from XModuleMixin in order to expose XModule-specific services.
+
+
+                    (-> == "inherits from")
+                    CourseDescriptor -> SequenceDescriptor -> MakoModuleDescriptor -> XModuleDescriptor -> XModuleMixin -> XBlock
+                </aside>
+                    <pre><code>
+class XModuleMixin(XModuleFields, XBlock):
+    """
+    Fields and methods used by XModules internally.
+
+    Adding this Mixin to an :class:`XBlock` allows it to cooperate with old-style :class:`XModules`
+    """
+                 </code></pre>
+                
+                </section>
+    
+
 
                 <section>
                     <h2>What's in a <code>course</code>?</h2>
@@ -424,7 +800,7 @@ execute_from_command_line([sys.argv[0]] + django_args)
     autostartup()
     ...</code></pre>
 
-<aside class="notes">The call to django.setup is necessary to load the settings. What's interesting is the call to autostartup.</aside>
+<aside>The call to django.setup is necessary to load the settings. What's interesting is the call to autostartup.</aside>
                 </section>
 
                 <section>
@@ -444,17 +820,17 @@ execute_from_command_line([sys.argv[0]] + django_args)
         if hasattr(mod, 'run'):
             mod.run()</code></pre>
 
-                    <aside class="notes">The startup module is a good place to store code that should be executed at every run</aside>
+                    <aside>The startup module is a good place to store code that should be executed at every run</aside>
                 </section>
 
                 <section>
                     <h3>XBlocks</h3>
-                    <p>everything is explained in 2:24 https://www.youtube.com/watch?v=dTS-nsf7d3Q (fantastic explanation by Ned)</p>
 
                     <p>XBlocks are like a webapp, but for only one div inside a page</p>
 
                     <p>The runtime of an xblock provides it with data and services. Examples?</p>
                     <p>XBlocks have nothing to do with a course. Hence the name, which has nothing to do with courses, education, etc.</p>
+                    <p>everything is explained in 2:24 https://www.youtube.com/watch?v=dTS-nsf7d3Q (fantastic explanation by Ned)</p>
                     <p>It should be mentioned that Ned (again!) made a great webinar with Appsembler on XBlocks: http://www.appsembler.com/blog/open-edx-xblocks-webinar/ Unfortunately, it's not technical enough for my taste.</p>
                 </section>
 
@@ -468,7 +844,7 @@ execute_from_command_line([sys.argv[0]] + django_args)
             'survey = poll:SurveyBlock',
         ]
     }</code></pre>
-                    <aside class="notes">Fragments are simple objects that aggregate html content, including external css/js resources, and renders it.
+                    <aside>Fragments are simple objects that aggregate html content, including external css/js resources, and renders it.
 
                     What's the scope in a field? The scope describes whether the field will have the same or different values for all users or xblock instances in a course.
 
@@ -513,7 +889,7 @@ class MyXblock(...):
 
                 <section>
                     <h2>The XModule runtime</h2>
-                    <aside class="notes">It took me a while to understand the following piece of code. Tip: what does the __getattr__ method do? (it's overridden)</aside>
+                    <aside>It took me a while to understand the following piece of code. Tip: what does the __getattr__ method do? (it's overridden)</aside>
                     <pre><code class="python"># xmodule.xmodule.x_module.CombinedSystem
 def render(self, block, view_name, context=None):
     ...
@@ -539,10 +915,9 @@ def xblock_view_handler(request, usage_key_string, view_name):
 
                 <section>
                     <h2>XBlock storage</h2>
-                    <aside class="notes">Where is XBlock data saved? An XBlock knows nothing about the storage backend that is used: it doesn't know whether we use SQL, MongoDb or a key-value store. You guessed it, the runtime is responsible for storing XBlock data.</aside>
+                    <aside>Where is XBlock data saved? An XBlock knows nothing about the storage backend that is used: it doesn't know whether we use SQL, MongoDb or a key-value store. You guessed it, the runtime is responsible for storing XBlock data.</aside>
 
-                    <pre><code class="python">
-class XBlock(ScopedStorageMixin, ...):
+                    <pre><code class="python">class XBlock(ScopedStorageMixin, ...):
     ...
 
 class ScopedStorageMixin(...):
@@ -579,7 +954,7 @@ class LmsFieldData(SplitFieldData):
             Scope.preferences: student_data,
         })</code></pre>
 
-                    <aside class="notes">What are student_data and authored_data? We can see that they are stored differently, but how? authored_data is in fact a MongoKeyValueStore. We can see that authored data is stored in MongoDb instead of MySQL.</aside>
+                    <aside>What are student_data and authored_data? We can see that they are stored differently, but how? authored_data is in fact a MongoKeyValueStore. We can see that authored data is stored in MongoDb instead of MySQL.</aside>
                 
                 </section>
                 <section>
@@ -599,43 +974,9 @@ def get_module_for_descriptor(user, request, descriptor, field_data_cache, cours
         ...
     )
 </code></pre>
-                <aside class="notes">As we can see, student data is stored in a key-value store managed by django. DjangoKeyValueStore is not very interesting to look at; all the intelligence is in field_data_cache. What about authored_data? authored_data is descriptor._field_data, but wtf is a descriptor?</aside>
+                <aside>As we can see, student data is stored in a key-value store managed by django. DjangoKeyValueStore is not very interesting to look at; all the intelligence is in field_data_cache. What about authored_data? authored_data is descriptor._field_data</aside>
 
-                <aside class="notes">A descriptor can be an instance of xblock.internal.CourseDescriptorWithMixins. Which is very weird because this class exists nowhere. Elsewhere, when loading another xblock, descriptor is an instance of xblock.internal.SequenceDescriptorWithMixins. In fact, descriptor are XBlock instances that are made to inherit from all classes listed in settings.XBLOCK_MIXINS. The xblock inherits thanks to magic performed by xblock.runtime.Mixologist:</aside>
-
-<pre><code>
-class Mixologist(object):
-    def __init__(self, mixins):
-        self._mixins = tuple(mixins)
-
-    def mix(self, cls):
-        ...
-        return type(
-            base_class.__name__ + 'WithMixins',   # class name
-            (base_class, ) + self._mixins,        # class bases
-            {'unmixed_class': base_class}         # class attributes
-        )
-</code></pre>
-                </section>
-
-                <section>
-                <aside class="notes">In Open edX, XBlocks inherit from XModuleMixin in order to expose XModule-specific services.
-
-
-                    (-> == "inherits from")
-                    CourseDescriptor -> SequenceDescriptor -> MakoModuleDescriptor -> XModuleDescriptor -> XModuleMixin -> XBlock
-                </aside>
-                    <pre><code>
-class XModuleMixin(XModuleFields, XBlock):
-    """
-    Fields and methods used by XModules internally.
-
-    Adding this Mixin to an :class:`XBlock` allows it to cooperate with old-style :class:`XModules`
-    """
-                 </code></pre>
-                
-                </section>
-    
+            </section>
                 <section>
                     <h3>The common/djangoapps/student app</h3>
                     <p>9k+ loc. What for?</p>
@@ -654,7 +995,7 @@ class XModuleMixin(XModuleFields, XBlock):
 ...                   
 from pavelib import *</pre>
 
-                    <aside class="notes">One can choose between paver and manage.py for calling most mundane tasks. So if you wish to add some code to edx-platform, without actually forking the code, it's a good idea to patch manage.py or to create your own command that does almost the same thing as manage.py.</aside>
+                    <aside>One can choose between paver and manage.py for calling most mundane tasks. So if you wish to add some code to edx-platform, without actually forking the code, it's a good idea to patch manage.py or to create your own command that does almost the same thing as manage.py.</aside>
                 </section>
 
                 <section>
@@ -672,7 +1013,7 @@ from pavelib import *</pre>
                     <img src="./img/lon-capa_team.jpg" alt="LON-CAPA team">
 
                     <p>If I understand correctly, the CAPA problems are the basic problems included in a course. For more sophisticated problems, you need to refer to the more modern XBlocks API. Since CAPA problems are outdated, we won't talk about them too much.</p>
-                    <aside class="notes">As you can guess from the computer equipment in this picture, LON-CAPA was developed a long time before the Open edX team was assembled.</aside>
+                    <aside>As you can guess from the computer equipment in this picture, LON-CAPA was developed a long time before the Open edX team was assembled.</aside>
                 </section>
 
                 <section>
@@ -711,6 +1052,10 @@ from pavelib import *</pre>
         <!--Reveal.js-->
 		<script src="lib/js/head.min.js"></script>
 		<script src="lib/js/jquery-1.11.3.min.js"></script>
+        <script>
+            // Make all asides notes
+            $("aside").addClass("notes");
+        </script>
 		<script src="js/reveal.js"></script>
 
         <!--JS plots-->
@@ -723,7 +1068,6 @@ from pavelib import *</pre>
 				controls: false,
 				progress: true,
 				history: true,
-				center: true,
                 slideNumber: true,
 
 				transition: 'fade', // none/fade/slide/convex/concave/zoom
