@@ -681,7 +681,14 @@ This xblock also has associated methods. In one of them, we access the 'settings
                     <h3>XBlock runtimes</h3>
                     <aside>Let's cut to the chase: a runtime is also in charge of instantiating xblocks. As we can see, a runtime needs to be passed to the xblock constructor. In practice, the runtime passes itself to the new xblock instances.
                         
-                        Now, like we said, runtimes also provide services to Xblocks. Services can be just about anything. The call to 'service' returns an object on which the xblock is free to call just any function. In particular, there exists a service in charge of reading and writing xblock field data. Let's take a look at that service. 
+                        Now, like we said, runtimes also provide services to Xblocks. Services can be just about anything. 
+                        
+                        The call to 'service' returns an object on which the xblock is free to call just any function.
+                        
+TODO how to create a new service and add it to the LMS? and why should we do it?
+Actually, xblock developers are encouraged to make use of runtime services instead of importing modules from the edx-platform repository. Remember: xblocks are supposed to be portable and not implementation-specific. They declare to the runtime the services that they require, via the 'needs' and 'wants' decorators. 
+
+                        In particular, there exists a service in charge of reading and writing xblock field data. Let's take a look at that service. 
                     </aside>
                     <p>Runtime responsibilities:</p>
                     <p class="fragment">1. Instantiate xblocks</p>
@@ -697,16 +704,17 @@ This xblock also has associated methods. In one of them, we access the 'settings
 
                         <p class="fragment">2. Provide service to xblocks</p>
 <pre><code class="python fragment">settings_service = self.runtime.service(self, "settings")</code></pre>
-                        </p>
                 </section>
                 <section>
                     <h3>XBlock runtimes</h3>
                     <h4>XBlock serialization/deserialization ('field-data' service)</h4>
-                    <aside>The XBlock class inherits from the ScopedStorageMixin, which itself needs the field-data service. The 'field-data' service is expected to expose a `set_many` method that can be used to save xblock instances. This is for writing xblock data. What about reading xblock data? This is performed inside the Field class. Each field attribute reads into the field_data of the xblock -- in other words, the field-data service from the runtime. Then, the methods has and get are executed.</aside>
-<pre><code class="python fragment">class XBlock(..., ScopedStorageMixin, ...):
-    ...</code></pre>
+                    <aside>The XBlock class inherits from the ScopedStorageMixin, which itself needs the field-data service. The 'field-data' service is expected to expose a `set_many` method that can be used to save xblock instances. This is for writing xblock data. What about reading xblock data? This is performed inside the Field class. Each field attribute reads into the field_data of the xblock -- in other words, the field-data service from the runtime. Then, the methods has and get are executed. Actually, the field data service is pretty straightforward. The field-data service is only supposed to implement the FieldData interface. Here it is:</aside>
+<div class="fragment"><pre>xblock/core.py</pre>
+<pre><code class="python">class XBlock(..., ScopedStorageMixin, ...):
+    ...</code></pre></div>
 
-<pre><code class="fragment python">@RuntimeServicesMixin.needs('field-data')
+<div class="fragment"><pre>xblock/mixins.py</pre>
+<pre><code class="python">@RuntimeServicesMixin.needs('field-data')
 class ScopedStorageMixin(...):     
     @property
     def _field_data(self):
@@ -714,20 +722,115 @@ class ScopedStorageMixin(...):
 
     def force_save_fields(self, field_names):
         ...
-        self._field_data.set_many(self, fields_to_save_json)</code></pre>
+        self._field_data.set_many(self, fields_to_save_json)</code></pre></div>
 
-<pre><code class="python fragment">class Field(...):
+<div class="fragment"><pre>xblock/fields.py</pre>
+<pre><code class="python">class Field(...):
     def __get__(self, xblock, ...):
-        """
-        Gets the value of this xblock. Prioritizes the cached value over
-        obtaining the value from the field-data service. Thus if a cached value
-        exists, that is the value that will be returned.
-        """
         field_data = xblock._field_data
 
         if field_data.has(xblock, self.name):
             return value = self.from_json(field_data.get(xblock, self.name))
-        else: ...</code></pre>
+        else: ...</code></pre></div>
+                </section>
+
+                <section>
+                    <h3>XBlock runtimes</h3>
+                    <h4>XBlock serialization/deserialization ('field-data' service)</h4>
+                    <aside> which contains a handful of methods to implement. These methods are get, set and delete. The set_many and has methods are actually wrappers around set and get, respectively. Ok, now we now a bit more about xblock storage. Just to summarize our progress until now:</aside>
+<pre>xblock/field_data.py</pre> 
+<pre><code class="python">class FieldData(object):
+    @abstractmethod
+    def get(self, block, name):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set(self, block, name, value):
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete(self, block, name):
+        raise NotImplementedError
+
+    @abstractmethod
+    def has(self, block, name):
+        try:
+            self.get(block, name)
+            return True
+        except KeyError:
+            return False
+
+    def set_many(self, block, update_dict):
+        for key, value in update_dict.items():
+            self.set(block, key, value)</code></pre>
+                </section>
+
+                <section>
+                    <aside>Course components, and actually course themselves are... thingies with mixins. They are also... xblocks. Which are instantiated by a... runtime with a field-data service... that stores data in... where? Well it depends of course. You are perfectly free to store your data in SQL, MongoDB, the Saturn rings or the Luggage as long as they implement the FieldData interface. But where does Open edX store course data? To answer that question, we need </aside>
+                    <p class="fragment green">Course components</p>
+                    <p class="fragment">are</p>
+                    <p class="fragment green">StuffWithMixins</p>
+                    <p class="fragment">are</p>
+                    <p class="fragment green">XBlocks</p>
+                    <p class="fragment">instantiated by</p>
+                    <p class="fragment green">a runtime</p>
+                    <p class="fragment">with a</p>
+                    <p class="fragment green">'field-data' service</p>
+                    <p class="fragment">that stores data in</p>
+                    <p class="fragment orange">where?</p>
+                </section>
+
+                <section>
+                    <h3>The LMS/CMS runtimes</h3>
+                    <aside>The LMS and the CMS each define a different runtime, which is not so surprising, because xblocks need to use different services and rendering functions in the lms and in the cms. The LMS runtime is defined in the lms_xblock application. It's called the LmsModuleSystem, and it inherits from the ModuleSystem class. The runtime of the CMS is located in the contentstore of the cms, and it's called the PreviewModuleSystem. It also inherits from the ModuleSystem. But what is the ModuleSystem? The ModuleSystem is defined in the xmodule application and inherits from the xblock Runtime class. Now we begin to understand why the xmodule application is so large. Perhaps you remember that the xmodule package counts more than 65k lines of code. And it's pretty natural, considering it contains the definition of the CourseDescriptor class, the definition of many course components, both the Open edX runtimes and the definition of multiple modulestores.
+                    
+Actually, in Open edX, the modulestore is in charge of loading the xblocks. Because of historical reasons, open edx needs to manipulate XModules, not xblocks. What are XModules? Xmodules are created from XModuledescriptors, which are not bound to a student. To make things even more complicated, XModuleDescriptor inherit from XBlock, although they are not bound to a student. The binding is done by the bind_for_student method of the XModule class. Again, this is very complex stuff, and not 100% necessary to understand. Let's just remember that Open edX creates a glue to make old XModules compatible with modern XBlocks. But still, we'd like to know where our stuff is stored! 
+
+
+xmodule/xmodule/x_module.py
+
+@XBlock.needs("i18n")
+class XModuleDescriptor(HTMLSnippet, ResourceTemplates, XModuleMixin):
+    """
+    An XModuleDescriptor is a specification for an element of a course. This
+    could be a problem, an organizational element (a group of content), or a
+    segment of video, for example.
+
+    XModuleDescriptors are independent and agnostic to the current student state
+    on a problem. They handle the editing interface used by instructors to
+    create a problem, and can generate XModules (which do know about student
+    state).
+    """
+    ...
+                    
+class XModuleMixin(XModuleFields, XBlock):
+    
+    def bind_for_student(self, xmodule_runtime, user_id, wrappers=None):
+        """
+        Set up this XBlock to act as an XModule instead of an XModuleDescriptor.
+
+        Arguments:
+            xmodule_runtime (:class:`ModuleSystem'): the runtime to use when accessing student facing methods
+            user_id: The user_id to set in scope_ids
+            wrappers: These are a list functions that put a wrapper, such as
+                      LmsFieldData or OverrideFieldData, around the field_data.
+                      Note that the functions will be applied in the order in
+                      which they're listed. So [f1, f2] -> f2(f1(field_data))
+        """
+        ...
+                    
+                    </aside>
+<pre>lms/djangoapps/lms_xblock/runtime.py</pre>
+<pre><code class="python">class LmsModuleSystem(ModuleSystem):
+    def __init__(self, **kwargs):
+        services = kwargs.setdefault('services', {})</code></pre>
+<pre>cms/djangoapps/contentstore/views/preview.py</pre>
+<pre><code class="python">class PreviewModuleSystem(ModuleSystem):
+    ...</code></pre>
+<pre>common/lib/xmodule/xmodule/x_module.py</pre>
+<pre><code class="python">class ModuleSystem(..., xblock.runtime.Runtime):
+    ...</code></pre>
+                
                 </section>
 
                 <section>
@@ -770,6 +873,7 @@ class LmsFieldData(SplitFieldData):
             Scope.settings: authored_data,
             Scope.parent: authored_data,
             Scope.children: authored_data,
+
             Scope.user_state_summary: student_data,
             Scope.user_state: student_data,
             Scope.user_info: student_data,
@@ -796,7 +900,9 @@ def get_module_for_descriptor(user, request, descriptor, field_data_cache, cours
         ...
     )
 </code></pre>
-                <aside>As we can see, student data is stored in a key-value store managed by django. DjangoKeyValueStore is not very interesting to look at; all the intelligence is in field_data_cache. What about authored_data? authored_data is descriptor._field_data</aside>
+                <aside>As we can see, student data is stored in a key-value store managed by django. DjangoKeyValueStore is not very interesting to look at; all the intelligence is in field_data_cache. What about authored_data? authored_data is descriptor._field_data. And the storage of this data is installation-dependent. Itis configured by a setting called MODULESTORE. If you use the default Open edX settings, then you are using a MixedModuleStore that can point to multiple modulestores: a Draft Modulestore, a SplitMongo Versioned Draft Modulestore or an XML Modulestorestore. You can even use multiple modulestores at the same time.
+                    
+                    To summarize: in Open edX, while xblocks are not bound to a user, they are actually XModuleDescriptor. They do not contain any user-specific data, just authored data, which is stored inside a modulestore configured by the MODULESTORE variable. But once an xblock becomes attached to a user, the field_data that is used is a django, SQL-based Key-value store. Pfiouh, that was hard.</aside>
 
                 </section>
 
@@ -819,29 +925,29 @@ def get_module_for_descriptor(user, request, descriptor, field_data_cache, cours
                 </section>
 
                 <section>
-                    <h3>Opaque keys</h3>
-                    <p>TODO</p>
-                </section>
-
-                <section>
-                    <h3>ORA2: Open peer assessment</h3>
+                    <p>Things I would have liked to investigate and talk about if I had had the time:</p>
+                    <ol>
+                        <li>ORA2</li>
+                        <li>Opaque keys</li>
+                        <li>CAPA</li>
+                    </ol>
                 </section>
 
                 <section>
                     <h3>Get in touch</h3>
-                    <div class="table">
+                    <div class="table" style="width: 100%;">
                         <div class="table-row">
                             <div class="table-cell">
                                 <img src="./img/regis.png" alt="Régis">
-                                <p class="sidespace">regis@openfun.fr</p>
+                                <p class="sidespace" style="font-size: 85%;">Régis Behmo<br>regis@fun-mooc.fr</p>
                             </div>
                             <div class="table-cell sidespace">
                                 <img src="./img/richard.png" alt="Richard">
-                                <p class="sidespace">richard@fun-mooc.fr</p>
+                                <p class="sidespace" style="font-size: 85%;">Richard Moch<br>richard@fun-mooc.fr</p>
                             </div>
                             <div class="table-cell sidespace">
                                 <img src="./img/sylvain.png" alt="Sylvain">
-                                <p class="sidespace">sylvain@fun-mooc.fr</p>
+                                <p class="sidespace" style="font-size: 85%;">Sylvain Toé<br>sylvain@fun-mooc.fr</p>
                             </div>
                         </div>
                     </div>
