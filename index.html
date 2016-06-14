@@ -110,22 +110,35 @@
                     <a href="https://www.fun-mooc.com">fun-mooc.com</a>
                     </p>
                     <img src="./img/orlando.png" width="50px" alt="Orlando" style="border: none; background: none;">
-                    <aside>
-                        Hi everyone! I'm Régis. It's fantastic to be here in sunny California, and not in France where everybody is talking non-stop about soccer. My employer is the French government. I know, that sounds kind of boring but it's actually a great project. And a lot of work too. We are a team of 4 developers, including Richard and Sylvain who are also attending the conference this week and we create FUN (France Université Numérique), an open edx-based platform that provides about 350 courses to more than 700k subscribed users.</aside> 
-                    
+                    <aside>Hi everyone! I'm Régis. It's awesome to be here today! This is going to be a really cool conference. We are in California, the sun is shining and we are going to talk about ed tech and code all week. I come from France and right now there is a thunderstorm in Paris. Also the Euro football cup just started. So, definitely a good time to be out of the country.
+
+My employer is the French government. I know that doesn't sound very sexy but it's actually a cool project. We are a team of 4 developers, including Richard and Sylvain who are also attending the conference this week and we create FUN (France Université Numérique).</aside> 
                 </section>
+
                 <section>
-                    <img src="./img/fun-mooc.png" alt="fun-mooc.fr" height="600px;">
-                    <p><a href="https://www.fun-mooc.fr">https://www.fun-mooc.fr</a></p>
-                    <aside>It's pretty exciting because education is a project that I can relate with. I think we all do, here today. And that's part of the reason why I love Open edX.
+                    <img src="./img/fun-mooc.png" alt="fun-mooc.fr" height="550px;">
+                    <p><a href="https://www.fun-mooc.fr">https://www.fun-mooc.fr</a><br>
+                    350 courses, 700 000 users
+                    </p>
+                    <aside>FUN is an open edx-based platform that provides about 350 courses to more than 700k subscribed users. 
                         
-                        I mean, I used to work in digital advertising. If you are working or you know people who are working as software engineers in digital advertising or even banking, I'm telling you, there IS a way out. 
+                        It's a pretty exciting project because education is a topic that I can relate with. I guess we all do, here today.
+
+                        So, yeah, definitely a great time to be a software engineer.
                         
-                        Anyway, who is a software engineer here today? And who is a python developer? (Python developer, as in: you have written 1k lines of python code) How many are django developers? (as in: you have contributed to a Django project at some point) That's great. For the others: it's okay, the world needs you, too. Some parts of this presentation are going to be difficult to follow but you can watch it again later on youtube and the slides will be made available online on github.</aside>
+                        Anyway, who is a software engineer here today? And who is a python developer? (Python developer, as in: you have written 1k lines of python code) How many are django developers? (as in: you have contributed to a Django project at some point) That's great. 
+                        
+                        For the others: it's okay, I guess the world needs you, too.
+                        
+                        Some parts of this presentation are going to be difficult to follow for the non developers but you can take the time to watch it again later on youtube and the slides will be made available online on github.</aside>
 				</section>
 
                 <section>
-                    <aside>So what are we going to talk about? I'd like to talk about the Open edX source code. After all, the Open edX source code is the raw material from which everything else is made. It's like the concrete in a skyscraper. There is a lot of documentation on how to configure, how to run or to use Open edX, but surprisingly little on the low-level side of things. Open edX is a pretty big piece of software: what is this software made of?
+                    <aside>So what are we going to talk about? I'd like to talk about the Open edX source code. The source code is the raw material of Open edX. It's pretty much like the concrete, the glass and the cement in a skyscraper.
+                        
+I feel like there is a lot of publicly available documentation on how to configure, how to run or how to use Open edX, but very little on what is actually Open edX made of.
+
+Basically, in order to understand the Open edX source code, you have to read the Open edX source code. And that's what we are going to do in this presentation.
                     </aside>
                 </section>
 
@@ -138,7 +151,9 @@
 
     As we can see, it would be wrong to assume that Open edX consists of a single code repository. There are mandatory repositories, such as edx-platform and its dependencies from the virtual environment; there is a theming repo that you may wish to create and install yourselves. The forum repository is pretty much mandatory as well, if you wish to provide your users a discussion service. And there are optional ecommerce repositories, which you don't need if your platform does not offer paying products.
 
-    Let's take a look at the first repository listed here. edx-platform is actually the biggest code repository that is necessary to run Open edX. But how big is it? Let me do a quick survey here: how many lines of code do you think there are in edx-platform? I'm talking about actual code: not comments, not blank lines and not vendor dependencies (but test code is included).
+    But actually, Open edX is mostly made of the first repository here, edx-platform.
+    
+    edx-platform is actually the biggest code repository that is necessary to run Open edX. But how big is it? Let me do a quick survey here: how many lines of code do you think there are in edx-platform? I'm talking about actual code: not comments, not blank lines and not vendor dependencies (but test code is included).
                     </aside>
 
 <pre class="fragment" style="font-size: 90%;"><span class="fragment highlight-green"># LMS + CMS
@@ -164,7 +179,7 @@
 				</section>
     
                 <section>
-                    <aside>As an indication, here is the line count for several well known projects, written in Python and in other languages, such as Java or php. Does that change your estimates?</aside>
+                    <aside>As an indication, here is the line count for several well known projects, written in Python and in other languages, such as Java or php. For instance, Django is made up of 228k lines of code. Let's say that's one Django. Sentry, which is a famous django project for error logging is 0.77 Django. How much do you think is edx-platform?</aside>
                     <h3>Open edX from above</h3>
                     <h4>edx-platform</h4>
                     <p>How many lines of code in edx-platform? (1 Dj = 1 Django)</p>
@@ -182,9 +197,11 @@
                 </section>
 
                 <section>
-                    <aside>edx-platform contains 427k lines of code. Outside of python itself, as far as I know, this is the largest python project that fits in a single repository. edx-platform is twice as big as Django. And that's just for edx-platform; as I mentioned, edx-platform is one of many Open edX repositories. I can't emphasize this enough: Open edX is really big.
+                    <aside>edx-platform contains 427k lines of code. Outside of python itself, as far as I know, this is the largest python project that fits in a single repository. edx-platform is almost twice as big as Django. And that's just for edx-platform; as I mentioned, edx-platform is one of many Open edX repositories. I can't emphasize this enough: Open edX is really big.
                         
-    Why is that important? Well it's important for me. When I started working on this presentation I was like "yeah sure I'll read the open edx source code", no big deal... That didn't work too well. I only have X minutes left to finish this presentation, so I'm going to have to focus on the key parts of the Open edX source code. In fact, most of the code that you are going to find in Open edX is more-or-less standard Django code. What I would like to talk about in the time that we have left is the non-standard code, the tricky pieces, the things that are difficult to grasp. You know there are a few things like that in Open edX. To do that, we need to understand what edx-platform is made of. Let's take a look how the edx-platform code is organised, physically speaking.</aside>
+    Why is that important? Well it's important for me. When I started working on this presentation I was like "yeah sure I'll read the open edx source code", no big deal... That didn't work too well. I only have X minutes left to finish this presentation, so I'm going to have to focus on the key parts of the Open edX source code. In fact, most of the code that you are going to find in Open edX is more-or-less standard Django code. What I would like to talk about in the time that we have left is the non-standard code, the tricky pieces, the things that are difficult to grasp.
+    
+    To do that, we need to understand what edx-platform is made of. Let's take a look how the edx-platform code is organised, physically speaking.</aside>
                     <h3>Open edX from above</h3>
                     <h4>edx-platform</h4>
                     <p>How many lines of code in edx-platform? (1 Dj = 1 Django)</p>
@@ -204,7 +221,11 @@
 
                 <section>
                     <h3>Inside edx-platform</h3>
-                    <aside>edx-platform is mostly made of Python, javascript, html and css code. That's not surprising at all for a large web project. Those of you that have worked with Open edX before know that running a server requires a rather long preliminary phase for compiling javascript and css code. This compile time is caused by the 13% of SASS and the Coffeescript code. Now let's take a closer look at how this code is organized.</aside>
+                    <aside>edx-platform is mostly made of Python, javascript, html and css code. That's not surprising at all for a large web project.
+                        
+                        Those of you that have worked with Open edX before know that running a server requires a long compilation step of javascript and css code. This compile time is caused by the 13% of SASS and the Coffeescript code.
+                        
+                        Now let's take a closer look at how this code is organized.</aside>
 
 <!--Command run was: cloc --exclude-list-file=./cloc_exclude --exclude-dir=node_modules,./common/static/fonts/vendor,./common/static/js/vendor,./common/static/css/vendor,./cms/static/sass/vendor,./lms/static/js/vendor,./lms/static/sass/vendor,./lms/static/css/vendor,./static/vendor,vendor_extra/ $1-->
 <pre style="text-align:center;" class="large"><code class="bash">cloc --exclude-dir=&lt;vendor-folders&gt; edx-platform</code></pre>
@@ -231,13 +252,21 @@ SUM:                          3777          97396         145736         <span c
 
                 <section>
                     <section data-state="edx-platform-cloc">
-                        <aside>In this sunburst ring graph, we have plotted the different components of edx-platform. The number of lines of code of each component is proportional to its angular range. The further we go from the center, the deeper we go in the folder structure of the repository. We can see that the edx-platform code is rather well separated in modular components. The lms and the cms are clearly visible; if you've never run Open edX before: edx-platform is not one single django project, but more like two distinct django projects : the LMS and the CMS. The LMS and the CMS share some common code, stored in the common and openedx folders, here and there.
+                        <aside>In this ring graph, we have plotted the different components of edx-platform. The number of lines of code of each component is proportional to its angular range. The further we go from the center, the deeper we go in the folder structure of the repository. We can see that the edx-platform code is rather well separated in modular components.
+                            
+                            The lms and the cms are clearly visible; as you may know, edx-platform is not one single django project, but more like two distinct django projects: the LMS and the CMS. The LMS is the django project provided to the students; the CMS is used by the course staff to design and administer their courses. 
+                            
+    The LMS and the CMS share some common code, stored in the common and openedx folders, here and there.
 
     We can spot a lot of javascript code, but also a lot of test code, including in the javascript folders, which is comforting.
                             
-    The LMS is the django project provided to the students; the CMS is used by the course staff to design and administer their courses. As we can see, the LMS-specific code is much more complex than the CMS-specific code. Note however that the code common to both the LMS and the CMS is very large as well; almost as large as the LMS-specific code. The LMS is made of many different django applications, the largest of which is the courseware, which is in charge of displaying a course to a user. On the other hand, the CMS is almost entirely made of one single big django application, called the contentstore. The common code contains a variety of application, but there is one library that stands out very clearly. The xmodule package is simply huge. At more than 65k lines of code, it can be considered as a very big python project in its own right.
+    As we can see, the LMS-specific code is much more complex than the CMS-specific code. However, note that the code common to both the LMS and the CMS is very large as well; actually bigger than the LMS-specific code.
+    
+    The LMS is made of many different django applications, the largest of which is the courseware, which is in charge of displaying a course to a user. On the other hand, the CMS is almost entirely made of one single big django application, called the contentstore. The common code contains a variety of application, but there is one library that stands out very clearly. The xmodule package is simply huge. At more than 65k lines of code, it can be considered as a very big python project in its own right.
 
-    (go down for lms/cms/common break down)
+    So that's the global structure of edx-platform. Let's take a quick look at the other repositories.
+
+    <!--(go down for lms/cms/common break down)-->
     </aside>
                         <div id="edx-platform-cloc" class="cloc"></div>
                         <p class="module-cloc" style="position: absolute; top: 0; left: 0; text-align: left;"></p>
@@ -258,7 +287,10 @@ SUM:                          3777          97396         145736         <span c
 
                 <section>
                     <h3>Inside edx-platform</h3>
-                    <aside>Here we compare edx-platform with other Open edX repositories that are included in the devstack. The largest of them is the cs_comments_service project, written in ruby. It provides an HTTP API that edx-platform connects to in order to display the forums in the LMS. The ecommerce repository is for selling products on Open edX: it's large but it hasn't been created specifically for Open edX. Then there is the virtual environment that contains all the edx-platform dependencies</aside>
+                    <aside>The other repositories are actually not that big compared to edx-platform. ecommerce is pretty large, but most people don't use it and anyway, it was designed to be used specifically for Open edX.
+
+Then there is the virtual environment that contains all the edx-platform dependencies. Let's take a look in there.</aside>
+
 <pre style="font-size: 90%;"># LMS + CMS
 /edx/app/edxapp/edx-platform       # 427321
 
@@ -282,7 +314,11 @@ SUM:                          3777          97396         145736         <span c
                 <section>
                     <h3>Inside edx-platform</h3>
                     <h4>dependencies</h4>
-                    <aside>The virtual environment contains quite a few packages. Here we listed a few of the Open edx-specific repositories. There are many xblocks, such as the recommender-xblock, edx-sga and edx-jsme (the molecular editor). Most of these xblocks clock at about 2k to 3k lines of code; this tells us that the average xblock is not a very complex piece of which tells us something about the approximate amount of work that goes into an xblock. that it's not so complex to create an xblock. What is impressive here is the size of the ora2 repository, for peer-assessed exams. But actually a very large part of that is test code. There is also a lot of javascript code. In all, there are less than 10k lines of python code in ora2, but there is a lot of javascript and CSS code.</aside>
+                    <aside>The virtual environment contains quite a few packages. Here we listed a few of the Open edx-specific repositories. There are many xblocks, such as the recommender-xblock, edx-sga and edx-jsme (the molecular editor).
+                        
+    Most of these xblocks clock at about 2k to 3k lines of code; this gives us an estimate of the amount of work required to produce an average xblock.
+    
+    What is impressive here is the size of the ora2 repository, for peer-assessed exams. But actually a very large part of that is test code. There is also a lot of javascript code. In all, there are less than 10k lines of python code in ora2, but there is a lot of javascript and CSS code.</aside>
 <pre style="font-size: 90%;">
 <span class="green">/edx/app/edxapp/venvs/edxapp</span>
     ora2                        # 31245
@@ -308,7 +344,13 @@ SUM:                          3777          97396         145736         <span c
                 <section>
                     <h3>Open edX from the inside</h3>
                     <h4 class="fragment">Viewing a course</h4>
-                    <aside>ALright, we have spent a lot of time counting lines of code in Open edX and that has been a bit tedious, sorry about that. Yet I feel it has been necessary in order to understand where the complexity lies in the project. We have seen the places where most code is written, and as we explore Open edX code, we can expect to pay a visit to these places. Now what I would like to do is take a specific view, in the django sense, and see where it goes. This should tell us something about how the sausage is made.</aside>
+                    <aside>Alright, we have spent a lot of time counting lines of code in Open edX and we haven't read any code yet.
+                        
+                        But I feel like this preliminary work was necessary in order to understand where the complexity lies in the project.
+                        
+                        We have seen the places where most code is written, and as we explore Open edX code, we can expect to pay a visit to these places. Now we are going to see how the sausage is made. what I would like to do is take a specific view, in the django sense, and see where it brings us.
+                    
+                    Ready? Go.</aside>
                 </section>
 
                 <section>
@@ -331,7 +373,10 @@ Starting development server at http://0.0.0.0:8000/
                     <aside>Now we just access the content of a course from a web browser. See the URL that has just been accessed?</aside>
                 </section>
                 <section data-background-image="./img/lms_lesson1_url.png">
-                    <aside>We are going to follow the trail of that url and find the code that generates the page with this url. To be honest, that's pretty much what Open edX developers do all day -- actually, what django or backend web developers do all day.</aside>
+                    <aside>We are going to follow the trail of that url and find the code that generates the page with this url.
+                        
+                        To be honest, that's pretty much what django developers do all day.
+                    </aside>
                 </section>
 
                 <section>
@@ -352,7 +397,12 @@ Starting development server at http://0.0.0.0:8000/
                 <section>
                     <h3>Open edX from the inside</h3>
                     <h4>Viewing a course</h4>
-                    <aside>We go down the rabbit hole and take a look at the content of the index view from the courseware views module. What can we find in there? First of all, the course is loaded by its course_key. Here, course is an object that -- apparently -- contains all the information related to the course. We can even use the course object to fetch the object that corresponds to the section inside the course that we are viewing in our browser. Let me ask you a question here: what is the type of the course object that we have here?</aside>
+                    <aside>We go down the rabbit hole and take a look at the content of the index view from the courseware views module. What can we find in there? 
+                        First of all, the course is loaded by its course_key. Here, course is an object that -- apparently -- contains all the information related to the course.
+                        
+                        We can even use the course object to fetch the object that corresponds to the section inside the course that we are viewing in our browser. 
+                        Ok, first question: what is the type of the course object that we have here?</aside>
+
 <pre class="large">lms/djangoapps/courseware/views.py:</pre>
 <pre class="large">def index(request, course_id, chapter, section):
     ...
@@ -369,7 +419,13 @@ Starting development server at http://0.0.0.0:8000/
                 </section>
 
                 <section>
-                    <aside>This instruction will print the class and the base classes of the course object. Here we go. (That got out of hand fast) That's a lot of base classes. We can see that the class of the course instance is CourseDescriptorWithMixins from the internal module of the xblock package. By the way, that's our first encounter with xblocks. That didn't take long, did it?
+                    <aside>This instruction will print the class and the base classes of the course object. Here we go. 
+                        
+                        (That got out of hand fast)
+                        
+                        Now that's a lot of base classes.
+                        
+                        We can see that the class of the course instance is CourseDescriptorWithMixins from the internal module of the xblock package. By the way, that's our first encounter with xblocks. That didn't take long, did it?
                     
                         I want to step back for a minute and recap how we got there.
                     </aside>
@@ -412,10 +468,15 @@ Starting development server at http://0.0.0.0:8000/
                 <section>
                     <h3>Open edX from the inside</h3>
                     <h4>Viewing a course</h4>
-                    <aside>First we have booted a local LMS server, then we have opened a url from the courseware ; we have followed that url to find the corresponding django view, located in the views module of the courseware app. That view contains an interesting piece of code that loads the course, and then loads the course section that we are accessing. What we observe is that a course is represented by an instance of CourseDescriptorWithMixins. There is something surprising about that. Actually, the CourseDescriptorWithMixins is not declared in the internal module of the xblock package. You can go take a look there, you won't find anything. In fact, the CourseDescriptorWithMixins class is not declared anywhere. We have a mystery here. We are going to solve that mystery, but first I'd like to ask you if you know what is a Mixin? (Raise your hands...)
+                    <aside>First we have booted a local LMS server, then we have opened a url from the courseware ; 
                         
-                        Let's go back to the list of base classes of the course object to understand what is happening here.
-                    
+                        we have followed that url to find the corresponding django view, located in the views module of the courseware app.
+                        
+                        That view contains an interesting piece of code that loads a course object.
+                        
+                        What we observe is that a course is represented by an instance of CourseDescriptorWithMixins.
+                        
+                        And there is something surprising about that. Actually, the CourseDescriptorWithMixins is not declared in the internal module of the xblock package. You can go take a look there, but will not find that class. In fact, the CourseDescriptorWithMixins class is not declared anywhere. We have a mystery here and we are going to solve that mystery, but first I'd like to make a quick survey. Who knows what's a mixin? (Raise your hands...)
                     </aside>
                     
                     <pre class="fragment medium" style="text-align: center;">http://.../courses/...edX+DemoX+Demo_Course/courseware/interactive_demonstrations/19a30.../</pre>
@@ -437,8 +498,7 @@ Starting development server at http://0.0.0.0:8000/
                         
                         This definition is a bit abstract, so let's see an example. Shape is a class that can serve as the base class of many different classes ; for instance, the Square class, and the Triangle class. All these shapes share a common method, the perimeter method which computes the sum of the lengths of the shape edges. Now let's say we need a colored shape : a shape with color. Applying colors is a neat feature, but not every class needs it. For instance, we only need colored squares, but not colored triangles. We definitely don't want to bloat the definition of triangles with a useless colorize method. So we create a ColorMixin that defines the colorize feature; note that the ColorMixin does not work by itself, because it has no edges attribute. Then the ColoredSquare class inherits from both the Square class and the ColorMixin class and exhibits properties from both worlds.
                     
-                        ...
-                        Ok, did that make it clear what a mixin is? In brief, a mixin is a class that provides a piece of functionality. It's like an interface, but with some partially-defined methods. 
+                       Ok, did that make it clear what a mixin is? In brief, a mixin is a class that provides a piece of functionality. It's like an interface, but with some partially-defined methods. It's also pretty much like an abstract class, but python has no way of making sure that a class really is abstract.
 
                         While doing this presentation I asked my developer friends if they knew what a mixin was; one of them told me "oh yeah it's one of those things that was very popular about ten years ago, but now not so much anymore". My feeling is that the world of developers is divided in two categories: those who hate Mixins and those who abuse them.
                         
@@ -472,7 +532,11 @@ class ColoredSquare(Square, ColorMixin):
                 </section>
 
                 <section>
-                    <aside>The course object is an instance of CourseDescriptorWithMixins but we notice that one of its base classes is CourseDescriptor from the module called course_module inside the xmodule package. Actually, what happens behind the scenes, is that the CourseDescriptorWithMixins class is generated dynamically as a combination of multiple classes, including the CourseDescriptor class. But how exactly is the CourseDescriptorWithMixins class generated?
+                    <aside>The course object is an instance of CourseDescriptorWithMixins but we notice that one of its base classes is CourseDescriptor from the module called course_module inside the xmodule package.
+                        
+                        Actually, what happens behind the scenes, is that the CourseDescriptorWithMixins class is generated dynamically as a combination of multiple classes, including the CourseDescriptor class.
+                        
+                        But how exactly is the CourseDescriptorWithMixins class generated?
                     </aside>
 
 <pre class="medium">pprint(course.__class__.__mro__) # class and all base classes of 'course'
@@ -514,7 +578,12 @@ class ColoredSquare(Square, ColorMixin):
                 <section>
                     <h3>Open edX from the inside</h3>
                     <h4>Viewing a course</h4>
-                    <aside>I won't keep you waiting and I'm going to answer this question right away. A CourseDescriptorWithMixins class is created by an instance of the Mixologist class. Let's take a look at this class. When a mixologist is instantiated, it is passed a list of classes. And when the mix method is called on a class, a new type is created that inherits from the mixin classes of the mixologist. But what kind of mixins do we usually pass to the constructor of the Mixologist class? In both the CMS and the common code, you'll find the following piece of code. HAHA! Now we can see that the default LMS and CMS base classes of a course are defined in a django setting.</aside>
+                    <aside>I won't keep you waiting and I'm going to answer this question right away.
+                        
+                        A CourseDescriptorWithMixins class is created by an instance of the Mixologist class. Let's take a look at this class. When a mixologist is instantiated, it is passed a list of classes. And when the mix method is called on a class, a new type is created that inherits from the mixin classes of the mixologist.
+
+                        While I was making that presentation I was wondering if a mixologist was a famous design pattern in programming, so I googled that, and that's what I found.
+                    </aside>
 
                     <div class="fragment">
 <pre class="large">xblock/runtime.py:</pre>
@@ -531,10 +600,33 @@ class ColoredSquare(Square, ColorMixin):
         )
 </code></pre>
                     </div>
+                </section>
+                <section data-background-image="./img/mixologist.png">
+                    <aside>Apparently a mixologist is just a pretentious bartender. I suggest someone makes a pull request to rename the mixologist.</aside>
+                </section>
 
+                <section>
+                    <h3>Open edX from the inside</h3>
+                    <h4>Viewing a course</h4>
+                    <aside>Anyway! But what kind of mixins do we usually pass to the constructor of the Mixologist class? In Open edX, this is how the Mixologist is instantiated.
+                        
+                        HAHA! Now we can see that the default base classes of a course object are defined in a django setting.</aside>
+
+<pre class="large">xblock/runtime.py:</pre>
+<pre class="large"><code class="python">class Mixologist(object):
+    def __init__(self, mixins):
+        self._mixins = tuple(mixins)
+
+    def mix(self, cls):
+        ...
+        return type(
+            base_class.__name__ + 'WithMixins',   # class name
+            (base_class, ) + self._mixins,        # class bases
+            {'unmixed_class': base_class}         # class attributes
+        )
+</code></pre>
                     <div class="fragment">
-<pre class="large">cms/djangoapps/contentstore/views/component.py
-common/lib/xmodule/xmodule/modulestore/__init__.py</pre>
+<pre class="large">common/lib/xmodule/xmodule/modulestore/__init__.py:</pre>
 <pre class="large"><code class="python">mixologist = Mixologist(settings.XBLOCK_MIXINS)</code></pre>
                     </div>
                 </section>
