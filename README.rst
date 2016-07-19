@@ -1,7 +1,9 @@
-Open edX 2015 conference slides
+Open edX 2016 conference slides
 ===============================
 
-This repo contains the slides from my talk: "Open edX 101: A Source Code Review".
+This repo contains the slides from my talk: "Open edX 101: A Source Code Review". (06/14/2016)
+
+Youtube video: https://www.youtube.com/watch?v=DVku7Y7XQII
 
 Usage::
 
