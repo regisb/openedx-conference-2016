@@ -21,5 +21,6 @@ Notes
 
 Not to show off or anything, but these slides got me free drinks:
 
-
 .. image:: ./img/payregisadrink.png
+
+For `Appsembler <http://www.appsembler.com/blog/open-edx-conference-2016-wrap-up/>`_ my talk "should be required watching for anyone trying to understand how Open edX is put together.".
